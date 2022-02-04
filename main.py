@@ -1,11 +1,13 @@
 import sys
-sys.path.append('AssembleNationale')
-import AssembleNationale
+import time
+import datetime
+
+sys.path.append('AssembleeNationale')
+import AssembleeNationale
 
 
-assembleNationale = AssembleNationale.AssembleNationale(verbose=0)
+assembleeNationale = AssembleeNationale.AssembleeNationale(verbose=2)
 
-r = assembleNationale.downloadSources("AssembleNationale/data/")
-assembleNationale.processSources("AssembleNationale/data/", r["updatedSources"])
-
-
+r = assembleeNationale.downloadSources("AssembleeNationale/data/")
+assembleeNationale.processSources("AssembleeNationale/data/", r["updatedSources"])
+assembleeNationale.search("covid")

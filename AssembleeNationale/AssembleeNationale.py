@@ -1,8 +1,12 @@
 import os
+import sys
 import time
 import json
 import shutil
+import html
 import zipfile
+import traceback
+import datetime
 import psycopg2
 import requests
 
@@ -20,20 +24,41 @@ class AssembleeNationale:
 	def __init__(self, verbose=0):
 		self.__verbose = verbose
 		self.__sourceList = sourceList = {
-			"DOSSIERS_LEGISLATIFS": {"link":"https://data.assemblee-nationale.fr/static/openData/repository/15/loi/dossiers_legislatifs/Dossiers_Legislatifs_XV.json.zip", "pollingFrequency":10000},
+			"DOSSIERS_LEGISLATIFS": {"link":"https://data.assemblee-nationale.fr/static/openData/repository/15/loi/dossiers_legislatifs/Dossiers_Legislatifs_XV.json.zip", "pollingFrequency":100000},
 			"AGENDA":{"link":"http://data.assemblee-nationale.fr/static/openData/repository/15/vp/seances/seances_publique_excel.csv", "pollingFrequency":10},
-			"AMENDEMENTS":{"link":"https://data.assemblee-nationale.fr/static/openData/repository/15/loi/amendements_legis/Amendements_XV.json.zip", "pollingFrequency":10000},
-			"DEBATS_EN_SEANCE_PUBLIQUE":{"link":"https://data.assemblee-nationale.fr/static/openData/repository/15/vp/syceronbrut/syseron.xml.zip", "pollingFrequency":10000},
-			"VOTES":{"link":"https://data.assemblee-nationale.fr/static/openData/repository/15/loi/scrutins/Scrutins_XV.json.zip", "pollingFrequency":10000},
-			"QUESTIONS_AU_GOUVERNEMENT":{"link":"https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_gouvernement/Questions_gouvernement_XV.json.zip", "pollingFrequency":10000},
-			"QUESTIONS_ORALES_SANS_DEBAT":{"link":"https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_orales_sans_debat/Questions_orales_sans_debat_XV.json.zip", "pollingFrequency":10},
-			"QUESTIONS_ECRITES":{"link":"https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_ecrites/Questions_ecrites_XV.json.zip", "pollingFrequency":10000},
-			"REUNIONS":{"link":"https://data.assemblee-nationale.fr/static/openData/repository/15/vp/reunions/Agenda_XV.json.zip", "pollingFrequency":10000},
+			"AMENDEMENTS":{"link":"https://data.assemblee-nationale.fr/static/openData/repository/15/loi/amendements_legis/Amendements_XV.json.zip", "pollingFrequency":100000},
+			"DEBATS_EN_SEANCE_PUBLIQUE":{"link":"https://data.assemblee-nationale.fr/static/openData/repository/15/vp/syceronbrut/syseron.xml.zip", "pollingFrequency":100000},
+			"VOTES":{"link":"https://data.assemblee-nationale.fr/static/openData/repository/15/loi/scrutins/Scrutins_XV.json.zip", "pollingFrequency":100000},
+			"QUESTIONS_AU_GOUVERNEMENT":{"link":"https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_gouvernement/Questions_gouvernement_XV.json.zip", "pollingFrequency":100000},
+			"QUESTIONS_ORALES_SANS_DEBAT":{"link":"https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_orales_sans_debat/Questions_orales_sans_debat_XV.json.zip", "pollingFrequency":100000},
+			"QUESTIONS_ECRITES":{"link":"https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_ecrites/Questions_ecrites_XV.json.zip", "pollingFrequency":100000},
+			"REUNIONS":{"link":"https://data.assemblee-nationale.fr/static/openData/repository/15/vp/reunions/Agenda_XV.json.zip", "pollingFrequency":100000},
 
 		}
 
+
+		self.__dossierLegislatifTableDefinition = {
+			"tableName":"DOSSIERS_LEGISLATIFS",
+			"schema":{
+				"uid":{"path":"document:uid", "htmlEscape":False, "type":"VARCHAR ( 20 ) PRIMARY KEY", },
+				"dateCreation":{"path":"document:cycleDeVie:chrono:dateCreation", "htmlEscape":False, "type":"TIMESTAMP WITH TIME ZONE"},
+				"dateDepot":{"path":"document:cycleDeVie:chrono:dateDepot", "htmlEscape":False, "type":"TIMESTAMP WITH TIME ZONE"},
+				"datePublication":{"path":"document:cycleDeVie:chrono:datePublication", "htmlEscape":False, "type":"TIMESTAMP WITH TIME ZONE"},
+				"datePublicationWeb":{"path":"document:cycleDeVie:chrono:datePublicationWeb", "htmlEscape":False, "type":"TIMESTAMP WITH TIME ZONE"},
+				"denominationStructurelle":{"path":"document:denominationStructurelle", "htmlEscape":True, "type":"VARCHAR ( 200 )"},
+				"titrePrincipal":{"path":"document:titres:titrePrincipal", "htmlEscape":True, "type":"VARCHAR ( 2000 )"},
+				"titrePrincipalCourt":{"path":"document:titres:titrePrincipalCourt", "htmlEscape":True, "type":"VARCHAR ( 2000 )"},
+				"dossierRef":{"path":"document:dossierRef", "htmlEscape":True, "type":"VARCHAR ( 200 )"},
+				"notice":{"path":"document:notice:formule", "htmlEscape":True, "type":"VARCHAR ( 2000 )"}
+				}
+			}
+		self.__tableList = [self.__dossierLegislatifTableDefinition]
+
 		self.__database = 'assembleenationale'
 		self.setupDatabase()
+		self.__jsonReadOK = 0
+		self.__jsonReadNOK = 0
+		self.__count = 0
 
 
 	"""setupDatabase
@@ -63,26 +88,26 @@ class AssembleeNationale:
 		connection.autocommit = True
 		cursor = connection.cursor()
 
-		# Create table DOSSIERS_LEGISLATIFS
-		table = "DOSSIERS_LEGISLATIFS"
-		try:
-		   query = """CREATE TABLE """+table+""" (
-		      uid VARCHAR ( 20 ) PRIMARY KEY,
-		      dateCreation TIMESTAMP NOT NULL,
-		      dateDepot TIMESTAMP NOT NULL,
-		      datePublication TIMESTAMP NOT NULL,
-		      datePublicationWeb TIMESTAMP NOT NULL,
-		      denominationStructurelle VARCHAR ( 200 ) NOT NULL,
-		      dossierRef VARCHAR ( 200 ) NOT NULL,
-		      titrePrincipal VARCHAR ( 500 ) NOT NULL,
-		      titrePrincipalCourt VARCHAR ( 500 ) NOT NULL,
-		      notice VARCHAR ( 500 ) NOT NULL
-		   );
-		   """
-		   cursor.execute(query)
-		   print("Table "+table+" created successfully...")
-		except psycopg2.errors.DuplicateTable:
-		   print("Table "+table+" already exists")
+
+		for tableDef in self.__tableList:
+			# Drop existing tables todo remove
+			"""try:
+				query = "DROP TABLE "+tableDef["tableName"]
+				cursor.execute(query)
+				print("Table "+tableDef["tableName"]+" drop successfully...")
+			except:
+				pass"""
+
+			try:
+				query = "CREATE TABLE "+tableDef["tableName"]+"("
+				columnString = ""
+				for columnName, columnDef in tableDef["schema"].items():
+					columnString+=columnName +" "+columnDef["type"]+","
+				query += columnString[:-1]+");"
+				cursor.execute(query)
+				print("Table "+tableDef["tableName"]+" created successfully...")
+			except psycopg2.errors.DuplicateTable:
+			   print("Table "+tableDef["tableName"]+" already exists")
 
 	"""downloadSources
 			Download files from a source list and store them in a specified directory
@@ -204,8 +229,10 @@ class AssembleeNationale:
 
 		sourceName = directoryToExtract.split("/")[-2]
 		if sourceName == "DOSSIERS_LEGISLATIFS":
-			self.__unicodeEscape(directoryToExtract)
-			self.__uploadToDossierLegislatif(directoryToExtract+"/json/document/")
+			#self.__uploadToDossierLegislatif(directoryToExtract+"/json/document", table=sourceName)
+			print("json OK:"+str(self.__jsonReadOK))
+			print("json NOK:"+str(self.__jsonReadNOK))
+			print("json count:"+str(self.__count))
 			pass
 		elif sourceName == "AGENDA":
 			pass
@@ -232,15 +259,14 @@ class AssembleeNationale:
 					
 	"""
 	def __unicodeEscape(self, directory):
-		for fileName in os.listdir(directory):
-			path = directory+"/"+fileName
-			if os.path.isdir(path):
-				self.__unicodeEscape(path)
-			elif os.path.isfile(path):
+		for root, subdirs, files in os.walk(directory):
+			for fileName in files:
+				path = os.path.join(root, fileName)
 				with open(path, 'rb') as source_file:
 					contents = source_file.read()
 					with open(path, 'wb') as dest_file:
 						dest_file.write(contents.decode('unicode_escape').encode('utf-8'))
+						self.__count+=1
 
 	"""__uploadToDossierLegislatif
 				Recursively explore the foler dossierLegislatif and upload to db
@@ -248,14 +274,97 @@ class AssembleeNationale:
 				@return : 
 					
 	"""
-	def __uploadToDossierLegislatif(self, directory):
-		for fileName in os.listdir(directory):
-			path = directory+"/"+fileName
-			if os.path.isdir(path):
-				self.__uploadToDossierLegislatif(path)
-			elif os.path.isfile(path):
+	def __uploadToDossierLegislatif(self, directory, table = "DOSSIERS_LEGISLATIFS"):
+		connection = psycopg2.connect(
+		   database=self.__database, user='postgres', password='password', host='localhost', port= '5432'
+		)
+		connection.autocommit = True
+		cursor = connection.cursor()
+
+
+		for root, subdirs, files in os.walk(directory):
+			for fileName in files:
+				path = os.path.join(root, fileName)
 				with open(path, 'r') as sourceFile:
 					text = sourceFile.read()
-					print(text)
-					json.loads(text)
+					try:
+						doc = json.loads(text)
+						try:
+							query = self.__buildQueryFromDef(doc, self.__dossierLegislatifTableDefinition)
+							cursor.execute(query)
+							self.__jsonReadOK+=1
+						except psycopg2.errors.UniqueViolation:
+							pass
+							#print("Insert in "+table+" already exists")
+						except:
+							print(path)
+							traceback.print_exc()
+					except:
+						self.__jsonReadNOK+=1
+						
+
+	"""__buildQueryFromDef
+				Build a query to insert an element from a dict defining the table
+				@params doc : json doc (data)
+				@params tableDef : dict defining the table
+				@return : 
 					
+	"""
+	def __buildQueryFromDef(self, doc, tableDef):
+		query =""
+		query += "INSERT INTO "+tableDef["tableName"]+"("
+		columnString = ""
+		valuesString = ""
+		for columnName, columnDef in tableDef["schema"].items():
+			try:
+				docPath = doc
+				for pathIter in columnDef["path"].split(":"):
+					docPath = docPath[pathIter]
+				if docPath is not None:
+					columnString += columnName+","
+					if columnDef["htmlEscape"]:
+						valuesString+= "\'"+html.escape(docPath)+"\',"
+					else:
+						valuesString+= "\'"+docPath+"\',"
+			except KeyError:
+				pass
+			except:
+				tracebacl.print_exc()
+
+
+		query += columnString[:-1] + ") VALUES (" + valuesString[:-1]+");"
+		return query
+
+
+	"""search
+				search a term in tables
+				@params term : term to search
+				@return : 
+					
+	"""
+	def search(self, term, listOfTables=None):
+		listOfTables = 0
+		connection = psycopg2.connect(
+		   database=self.__database, user='postgres', password='password', host='localhost', port= '5432'
+		)
+		connection.autocommit = True
+		cursor = connection.cursor()
+
+		try:
+			query ="ALTER TABLE DOSSIERS_LEGISLATIFS ADD COLUMN ts tsvector GENERATED ALWAYS AS (to_tsvector('french', titrePrincipal)) STORED;"
+			cursor.execute(query)
+		except:
+			pass
+		try:
+			query ="CREATE INDEX ts_idx ON DOSSIERS_LEGISLATIFS USING GIN (ts);"
+			cursor.execute(query)
+		except:
+			pass
+
+		query = "SELECT titrePrincipal FROM DOSSIERS_LEGISLATIFS WHERE ts @@ to_tsquery('french', 'transparence');"
+		cursor.execute(query)
+		for element in cursor.fetchall():
+			print(element)
+		print("kmlfds")
+
+

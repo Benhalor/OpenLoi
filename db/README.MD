@@ -23,3 +23,4 @@ The server should start on http://localhost:8080 by default.
 
 https://hub.docker.com/_/postgres
 --shm-size=256MB
+sudo ss -lptn 'sport = :5432'
