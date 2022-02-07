@@ -4,7 +4,7 @@
 
 .App-header {
     background-color: #ffffff;
-    max-width: 960px;
+    max-width: 70vw;
     width: 100%;
     font-size: calc(1.3rem);
     color: white;
@@ -23,7 +23,7 @@
 
 .App-body {
     background-color: #ffffff;
-    max-width: 960px;
+    max-width: 70vw;
     color: rgb(33, 37, 41);
     margin-right: auto;
     margin-left: auto;
@@ -72,8 +72,11 @@ a {
 }
 
 
+/* search bloc*/
+
 .label-for-search {
     cursor: pointer;
+    font-size: 2rem;
 }
 
 .col-md-auto {
@@ -85,7 +88,7 @@ a {
     display: flex;
     flex-direction: column;
     padding: 9vh 3.2rem;
-    background: linear-gradient(45deg, rgb(252, 229, 230), rgb(230, 231, 249));
+    background: linear-gradient(0deg, rgb(252, 229, 230), rgb(230, 231, 249));
     border-radius: 2rem;
     text-align: center;
 }
@@ -98,7 +101,7 @@ a {
 
 .searchBloc-title {
     color: rgb(33, 37, 41);
-    font-size: 2rem;
+    font-size: 3rem;
     font-weight: bold;
     
 }
@@ -107,11 +110,23 @@ a {
     width: 100%;
     border-width: 0px;  
     border-radius: 1.2rem;
-    font-size: 1.3rem;
+    font-size: 2rem;
 }
 
 .autocomplete {
-    font-size: 1.3rem;
-    min-width: 600px;
+    font-size: 2rem;
+    min-width: 30vw;
     margin-left:1.5rem;
+}
+
+
+/* result bloc */
+.resultsBloc {
+    background-color: rgb(239, 241, 243) !important;
+    text-align: center;
+    margin-top: 1vh;
+    margin-top: 1vh;
+    padding-top:1vh;
+    padding-bottom:1vh;
+    font-size: 1.5em;
 }
