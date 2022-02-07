@@ -1,0 +1,117 @@
+.App {
+    font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Liberation Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+}
+
+.App-header {
+    background-color: #ffffff;
+    max-width: 960px;
+    width: 100%;
+    font-size: calc(1.3rem);
+    color: white;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.App-footer {
+    background-color: #ffffff;
+    min-height: 5vh;
+    font-size: calc(10px + 2vmin);
+    color: white;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.App-body {
+    background-color: #ffffff;
+    max-width: 960px;
+    color: rgb(33, 37, 41);
+    margin-right: auto;
+    margin-left: auto;
+    font-size: 1.3rem;
+}
+
+.col {
+    flex-grow: 1;
+    flex-shrink: 0;
+    flex-basis: 0%;
+}
+
+.row{
+    display: flex;
+    flex-shrink: 0;
+    /*padding-right: calc(var(--bs-gutter-x) / 2);
+    padding-left: calc(var(--bs-gutter-x) / 2);
+    margin-top: var(--bs-gutter-y);*/
+}
+
+.col-auto {
+    flex: 0 0 auto;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: auto;
+    width: auto;
+    padding-right : 1.5rem;
+    padding-left : 1.5rem;
+}
+
+.align-items-center {
+    align-items: center !important;
+}
+
+.justify-content-end {
+    justify-content: flex-end !important;
+}
+
+.border-start {
+    border-left: 1px solid rgb(222, 226, 230) !important;
+}
+
+a {
+    color: rgb(33, 37, 41);
+    text-decoration: none;
+}
+
+
+.label-for-search {
+    cursor: pointer;
+}
+
+.col-md-auto {
+    flex: 0 0 auto;
+    width: auto;
+}
+
+.searchBloc {
+    display: flex;
+    flex-direction: column;
+    padding: 9vh 3.2rem;
+    background: linear-gradient(45deg, rgb(252, 229, 230), rgb(230, 231, 249));
+    border-radius: 2rem;
+    text-align: center;
+}
+
+.searchLine {
+    max-width: 75vw;
+    margin: auto;
+    margin-top:1.5rem;
+}
+
+.searchBloc-title {
+    color: rgb(33, 37, 41);
+    font-size: 2rem;
+    font-weight: bold;
+    
+}
+.autocomplete-input{
+    padding: 1.6rem 2.25rem 1.6rem 1.6rem;
+    width: 100%;
+    border-width: 0px;  
+    border-radius: 1.2rem;
+    font-size: 1.3rem;
+}
+
+.autocomplete {
+    font-size: 1.3rem;
+    min-width: 600px;
+    margin-left:1.5rem;
+}
