@@ -8,9 +8,13 @@ import Results from './components/results';
 class App extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { results: ["0", "1"] };
+    this.state = { queryResult: { "data": [] } };
   }
 
+  pullResults = (data) => {
+    console.log(data)
+    this.setState({queryResult:data})
+  }
 
   render() {
     return (
@@ -45,13 +49,11 @@ class App extends React.Component {
             </div>
             <div className="searchLine">
 
-              <NameForm />
+              <NameForm pullResults={this.pullResults} />
             </div>
           </div>
 
-          <Results
-            results={this.state.results} />
-
+          <Results queryResult={this.state.queryResult} />
         </div>
 
 

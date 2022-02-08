@@ -18,22 +18,17 @@ class NameForm extends React.Component {
     event.preventDefault();
   }
 
-
+ 
   updateSearchResults(query) {
-    fetch('http://localhost:5000/api/search/'+query)
+    fetch('http://localhost:5000/api/search/' + query)
       .then(response => response.json())
       .then(
         (result) => {
-          console.log(result)
-          this.setState({
-            numberOfResults: result.data.length 
-          });
+          this.props.pullResults(result)
+
         }
 
       )
-
-
-
   }
 
   render() {
@@ -44,7 +39,6 @@ class NameForm extends React.Component {
         </label>
         <div className="col autocomplete">
           <input type="search" className="autocomplete-input" value={this.state.value} autoComplete="off" onChange={this.handleChange} placeholder="Ex: crypto" />
-          {this.state.numberOfResults}
         </div>
       </form>
     );

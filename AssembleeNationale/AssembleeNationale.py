@@ -9,6 +9,7 @@ import traceback
 import datetime
 import psycopg2
 import requests
+from psycopg2 import sql
 
 
 class AssembleeNationale:
@@ -37,22 +38,39 @@ class AssembleeNationale:
 
         }
 
-        self.__dossierLegislatifTableDefinition = {
-            "tableName": "DOSSIERS_LEGISLATIFS",
+        self.__dossierLegislatifDocumentTableDefinition = {
+            "tableName": "DOSSIERS_LEGISLATIFS_DOCUMENT",
+            "source":"AN",
             "schema": {
-                "uid": {"path": "document:uid", "htmlEscape": False, "type": "VARCHAR ( 20 ) PRIMARY KEY", },
-                "dateCreation": {"path": "document:cycleDeVie:chrono:dateCreation", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE"},
-                "dateDepot": {"path": "document:cycleDeVie:chrono:dateDepot", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE"},
-                "datePublication": {"path": "document:cycleDeVie:chrono:datePublication", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE"},
-                "datePublicationWeb": {"path": "document:cycleDeVie:chrono:datePublicationWeb", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE"},
-                "denominationStructurelle": {"path": "document:denominationStructurelle", "htmlEscape": True, "type": "VARCHAR ( 200 )"},
-                "titrePrincipal": {"path": "document:titres:titrePrincipal", "htmlEscape": True, "type": "VARCHAR ( 2000 )"},
-                "titrePrincipalCourt": {"path": "document:titres:titrePrincipalCourt", "htmlEscape": True, "type": "VARCHAR ( 2000 )"},
-                "dossierRef": {"path": "document:dossierRef", "htmlEscape": True, "type": "VARCHAR ( 200 )"},
-                "notice": {"path": "document:notice:formule", "htmlEscape": True, "type": "VARCHAR ( 2000 )"}
+                "uid": {"path": "document:uid", "htmlEscape": False, "type": "VARCHAR ( 20 ) PRIMARY KEY", "search": True},
+                "dateCreation": {"path": "document:cycleDeVie:chrono:dateCreation", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
+                "dateDepot": {"path": "document:cycleDeVie:chrono:dateDepot", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
+                "datePublication": {"path": "document:cycleDeVie:chrono:datePublication", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
+                "datePublicationWeb": {"path": "document:cycleDeVie:chrono:datePublicationWeb", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
+                "denominationStructurelle": {"path": "document:denominationStructurelle", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": True},
+                "titrePrincipal": {"path": "document:titres:titrePrincipal", "htmlEscape": True, "type": "VARCHAR ( 2000 )", "search": True},
+                "titrePrincipalCourt": {"path": "document:titres:titrePrincipalCourt", "htmlEscape": True, "type": "VARCHAR ( 2000 )", "search": True},
+                "dossierRef": {"path": "document:dossierRef", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": False},
+                "notice": {"path": "document:notice:formule", "htmlEscape": True, "type": "VARCHAR ( 2000 )", "search": True}
             }
         }
-        self.__tableList = [self.__dossierLegislatifTableDefinition]
+
+        self.__dossierLegislatifDossierParlementaireTableDefinition = {
+            "tableName": "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE",
+            "source":"AN",
+            "schema": {
+                "uid": {"path": "dossierParlementaire:uid", "htmlEscape": False, "type": "VARCHAR ( 20 ) PRIMARY KEY", "search": True},
+                "titre": {"path": "dossierParlementaire:titreDossier:titre", "htmlEscape": True, "type": "VARCHAR ( 2000 )", "search": True},
+                "senatChemin": {"path": "dossierParlementaire:titreDossier:senatChemin", "htmlEscape": False, "type": "VARCHAR ( 2000 )", "search": False},
+                "anChemin": {"path": "dossierParlementaire:titreDossier:titreChemin", "htmlEscape": False, "type": "VARCHAR ( 2000 )", "search": False},
+                
+            }
+        }
+
+        self.__tableList = {
+            "DOSSIERS_LEGISLATIFS_DOCUMENT":self.__dossierLegislatifDocumentTableDefinition,
+            "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE":self.__dossierLegislatifDossierParlementaireTableDefinition,
+        }
 
         self.__database = 'assembleenationale'
 
@@ -93,14 +111,14 @@ class AssembleeNationale:
         connection.autocommit = True
         cursor = connection.cursor()
 
-        for tableDef in self.__tableList:
+        for key, tableDef in self.__tableList.items():
             # Drop existing tables todo remove
-            """try:
-                    query = "DROP TABLE "+tableDef["tableName"]
-                    cursor.execute(query)
-                    print("Table "+tableDef["tableName"]+" drop successfully...")
+            try:
+                query = "DROP TABLE "+tableDef["tableName"]
+                cursor.execute(query)
+                print("Table "+tableDef["tableName"]+" drop successfully...")
             except:
-                    pass"""
+                pass
 
             try:
                 query = "CREATE TABLE "+tableDef["tableName"]+"("
@@ -113,6 +131,26 @@ class AssembleeNationale:
                       " created successfully...")
             except psycopg2.errors.DuplicateTable:
                 print("Table "+tableDef["tableName"]+" already exists")
+
+            # Create searching index
+            try:
+                query = "ALTER TABLE "+tableDef["tableName"]+" ADD COLUMN ts tsvector GENERATED ALWAYS AS (to_tsvector('french',"
+                columnString = ""
+                for columnName, columnDef in tableDef["schema"].items():
+                    if (columnDef["search"]):
+                        columnString += columnName + "|| ' ' ||"
+                columnString= columnString[:-9]
+                query += columnString
+                query += ")) STORED;"
+                cursor.execute(query)
+            except:
+                pass
+            try:
+                query = "CREATE INDEX ts_idx ON " + \
+                    tableDef["tableName"] + " USING GIN (ts);"
+                cursor.execute(query)
+            except:
+                pass
 
     """downloadSources
 			Download files from a source list and store them in a specified directory
@@ -236,8 +274,10 @@ class AssembleeNationale:
 
         sourceName = directoryToExtract.split("/")[-2]
         if sourceName == "DOSSIERS_LEGISLATIFS":
-            self.__uploadToDossierLegislatif(
-                directoryToExtract+"/json/document", table=sourceName)
+            self.__uploadToDb(
+                directoryToExtract+"/json/document", table="DOSSIERS_LEGISLATIFS_DOCUMENT")
+            self.__uploadToDb(
+                directoryToExtract+"/json/dossierParlementaire", table="DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE")
             print("json OK:"+str(self.__jsonReadOK))
             print("json NOK:"+str(self.__jsonReadNOK))
             print("json count:"+str(self.__count))
@@ -278,14 +318,16 @@ class AssembleeNationale:
                             'unicode_escape').encode('utf-8'))
                         self.__count += 1
 
-    """__uploadToDossierLegislatif
+    """__uploadToDb
 				Recursively explore the foler dossierLegislatif and upload to db
-				@params path : path of the directory
+				@params directory : path of the directory
+                @params table : table name
 				@return : 
 					
 	"""
 
-    def __uploadToDossierLegislatif(self, directory, table="DOSSIERS_LEGISLATIFS"):
+    def __uploadToDb(self, directory, table="DOSSIERS_LEGISLATIFS_DOCUMENT"):
+        tableDefinition = self.__tableList[table]
         connection = psycopg2.connect(
             database=self.__database, user='postgres', password='password', host='localhost', port='5432'
         )
@@ -301,12 +343,11 @@ class AssembleeNationale:
                         doc = json.loads(text)
                         try:
                             query = self.__buildQueryFromDef(
-                                doc, self.__dossierLegislatifTableDefinition)
+                                doc, tableDefinition)
                             cursor.execute(query)
                             self.__jsonReadOK += 1
                         except psycopg2.errors.UniqueViolation:
                             pass
-                            #print("Insert in "+table+" already exists")
                         except:
                             print(path)
                             traceback.print_exc()
@@ -334,13 +375,13 @@ class AssembleeNationale:
                 if docPath is not None:
                     columnString += columnName+","
                     if columnDef["htmlEscape"]:
-                        valuesString += "\'"+html.escape(docPath)+"\',"
+                        valuesString += "\'"+self.__htmlEscape(docPath)+"\',"
                     else:
                         valuesString += "\'"+docPath+"\',"
             except KeyError:
                 pass
             except:
-                tracebacl.print_exc()
+                traceback.print_exc()
 
         query += columnString[:-1] + ") VALUES (" + valuesString[:-1]+");"
         return query
@@ -348,11 +389,13 @@ class AssembleeNationale:
     """search
 				search a term in tables
 				@params term : term to search
+                @params maxNumberOfResults : max number of results to return
 				@return : 
 					
 	"""
 
-    def search(self, term, listOfTables=None):
+    def search(self, term, maxNumberOfResults = 1000):
+        processedQuery = term.replace("'", "\\'").replace("--", "").replace(" ","<5>")
         listOfTables = 0
         connection = psycopg2.connect(
             database=self.__database, user='postgres', password='password', host='localhost', port='5432'
@@ -360,32 +403,87 @@ class AssembleeNationale:
         connection.autocommit = True
         cursor = connection.cursor()
 
-        try:
-            query = "ALTER TABLE DOSSIERS_LEGISLATIFS ADD COLUMN ts tsvector GENERATED ALWAYS AS (to_tsvector('french', titrePrincipal)) STORED;"
-            cursor.execute(query)
-        except:
-            pass
-        try:
-            query = "CREATE INDEX ts_idx ON DOSSIERS_LEGISLATIFS USING GIN (ts);"
-            cursor.execute(query)
-        except:
-            pass
+        ret = {}
+        ret["data"] = {}
+        ret["count"]=0
+        ret["query"]=term
+        totalCount = 0
 
+        tableDef = self.__dossierLegislatifDocumentTableDefinition
         query = "SELECT "
-        for key in self.__dossierLegislatifTableDefinition["schema"].keys():
+        for key in tableDef["schema"].keys():
             query += key + ","
         query = query[:-1]
-        query += " FROM DOSSIERS_LEGISLATIFS WHERE ts @@ to_tsquery('french','" + \
-            term+"');"
-        cursor.execute(query)
+        query += " FROM DOSSIERS_LEGISLATIFS_DOCUMENT WHERE ts @@ to_tsquery('french',%s);"
+
+        try:
+            cursor.execute(query, (processedQuery,))
+            count = 0
+            for entry in cursor.fetchall():
+                if count<maxNumberOfResults:
+                    entryData = {}
+                    listOfColumn = list(
+                        tableDef["schema"].keys())
+                    for i in range(len(entry)):
+                        if type(entry[i])==datetime.datetime:
+                            entryData[listOfColumn[i]] = str(entry[i])
+                        else:
+                            entryData[listOfColumn[i]] = entry[i]
+                    try:
+                        ret["data"][entryData["dossierRef"]]["documents"]
+                    except KeyError:
+                        ret["data"][entryData["dossierRef"]]= {}
+                        ret["data"][entryData["dossierRef"]]["documents"] = []
+                        ret["data"][entryData["dossierRef"]]["dossier"] = self.getDossierLegislatifByUid(entryData["dossierRef"])
+                    ret["data"][entryData["dossierRef"]]["documents"].append(entryData)
+                count+=1
+                totalCount+=1
+        except:
+            traceback.print_exc()
+        ret["count"]=totalCount
+        return json.dumps(ret)
+
+    """__htmlEscape
+				Escape some char string
+				@params string : term to search
+				@return : 
+					
+	"""
+
+    def __htmlEscape(self, string):
+        return string.replace("'", "''")
+
+
+    """getDossierLegislatifByUid
+				return a dossier legislatif by its uid
+				@params uid : uid of dossier
+				@return : 
+					
+	"""
+
+    def getDossierLegislatifByUid(self, uid):
+        tableDef = self.__dossierLegislatifDossierParlementaireTableDefinition
+
+        connection = psycopg2.connect(
+            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
+        )
+        connection.autocommit = True
+        cursor = connection.cursor()
+
         ret = {}
-        ret["data"] = []
-        for entry in cursor.fetchall():
-            entryData = {}
-            entryData["type"] = "DOSSIERS_LEGISLATIFS"
+        query = "SELECT "
+        for key in tableDef["schema"].keys():
+            query += key + ","
+        query = query[:-1]
+        query += " FROM DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE WHERE uid=%s;"
+    
+        try:
+            cursor.execute(query, (uid,))
+            entry = cursor.fetchone()   
             listOfColumn = list(
-                self.__dossierLegislatifTableDefinition["schema"].keys())
+                tableDef["schema"].keys())
             for i in range(len(entry)):
-                entryData[listOfColumn[i]] = entry[i]
-            ret["data"].append(entryData)
-        return json.dumps(ret, default=str)
+                ret[listOfColumn[i]] = entry[i]
+        except:
+            traceback.print_exc()
+        return ret

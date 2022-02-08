@@ -87,7 +87,7 @@ a {
 .searchBloc {
     display: flex;
     flex-direction: column;
-    padding: 9vh 3.2rem;
+    padding: 4vh 3.2rem;
     background: linear-gradient(0deg, rgb(252, 229, 230), rgb(230, 231, 249));
     border-radius: 2rem;
     text-align: center;
@@ -128,5 +128,38 @@ a {
     margin-top: 1vh;
     padding-top:1vh;
     padding-bottom:1vh;
-    font-size: 1.5em;
+    font-size: 1em;
+}
+
+/* Inidividual result*/
+.btn {
+    background-color: rgb(85, 97, 217);
+    border-color: rgb(85, 97, 217);
+    color: rgb(255, 255, 255);
+    font-size: 2rem;
+    box-shadow: rgb(0 0 0 / 8%) 0px 0.3rem 0.25rem;
+    border-radius: 0.8rem;
+    padding: 0.5rem 1rem;
+}
+
+button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disabled), [type="submit"]:not(:disabled) {
+    cursor: pointer;
+}
+
+.uid {
+    color: rgb(108, 117, 125);
+    font-size: 1rem;
+    margin-top:0.7rem;
+}
+
+.entete {
+    font-size: 1.4rem;
+    line-height: 2rem;
+    font-weight: 450;
+
+}
+
+.text-column {
+    text-align: justify ;
+    min-width: 40vw;
 }
