@@ -52,7 +52,7 @@ class DocumentLegislatif extends React.Component {
                         </div>
                         <div className="row">
 
-                            
+                        {this.props.data.uid}
                         </div>
                     </div>
 

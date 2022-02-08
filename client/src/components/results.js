@@ -12,7 +12,7 @@ class Results extends React.Component {
             return (
                 <div className="resultsBloc">
                     <div>{this.props.queryResult.count} Résultat(s) trouvé(s)</div>
-                    {Object.entries(this.props.queryResult.data).map(([dossierUid, data]) => <Result key={dossierUid} dossierUid={dossierUid} data = {data} query={this.props.queryResult.query} />)}
+                    {this.props.queryResult.listOfDossiersLegislatifs.map((uid) => <Result key={uid} dossierUid={uid} query={this.props.queryResult.query} />)}
                 </div>
             );
         } else {

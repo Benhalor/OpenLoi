@@ -397,7 +397,7 @@ class AssembleeNationale:
 					
 	"""
 
-    def search(self, term, maxNumberOfResults = 1000):
+    def search(self, term, maxNumberOfResults = 10):
         processedQuery = term.replace("'", "\\'").replace("--", "")
         listOfTables = 0
         connection = psycopg2.connect(
@@ -407,7 +407,7 @@ class AssembleeNationale:
         cursor = connection.cursor()
 
         ret = {}
-        ret["data"] = {}
+        ret["listOfDossiersLegislatifs"] = []
         ret["count"]=0
 
         # First get the radicals (use for highlight in react)
@@ -417,7 +417,7 @@ class AssembleeNationale:
             totalCount = 0
         except:
             traceback.print_exc()
-        processedQuery = processedQuery.replace(" ","<5>")
+        processedQuery = processedQuery.replace(" ","<3>")
 
         # Then get the results
         tableDef = self.__dossierLegislatifDocumentTableDefinition
@@ -440,13 +440,8 @@ class AssembleeNationale:
                             entryData[listOfColumn[i]] = str(entry[i])
                         else:
                             entryData[listOfColumn[i]] = entry[i]
-                    try:
-                        ret["data"][entryData["dossierRef"]]["documents"]
-                    except KeyError:
-                        ret["data"][entryData["dossierRef"]]= {}
-                        ret["data"][entryData["dossierRef"]]["documents"] = []
-                        ret["data"][entryData["dossierRef"]]["dossier"] = self.getDossierLegislatifByUid(entryData["dossierRef"])
-                    ret["data"][entryData["dossierRef"]]["documents"].append(entryData)
+                    if entryData["dossierRef"] not in ret["listOfDossiersLegislatifs"]:
+                        ret["listOfDossiersLegislatifs"].append(entryData["dossierRef"])
                 count+=1
                 totalCount+=1
         except:
@@ -499,6 +494,46 @@ class AssembleeNationale:
                 tableDef["schema"].keys())
             for i in range(len(entry)):
                 ret[listOfColumn[i]] = entry[i]
+        except:
+            traceback.print_exc()
+        return ret
+
+    """getDossierLegislatifdocumentsByUid
+				return a all documents of dossier legislatif by its uid
+				@params uid : uid of dossier
+				@return : 
+					
+	"""
+
+    def getDossierLegislatifdocumentsByUid(self, uid):
+        tableDef = self.__dossierLegislatifDocumentTableDefinition
+
+        connection = psycopg2.connect(
+            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
+        )
+        connection.autocommit = True
+        cursor = connection.cursor()
+
+        ret = {}
+        ret["documents"] = []
+        query = "SELECT "
+        for key in tableDef["schema"].keys():
+            query += key + ","
+        query = query[:-1]
+        query += " FROM DOSSIERS_LEGISLATIFS_DOCUMENT WHERE dossierRef=%s ORDER BY dateDepot DESC;"
+    
+        try:
+            cursor.execute(query, (uid,))
+            for entry in cursor.fetchall():
+                entryData = {}
+                listOfColumn = list(
+                    tableDef["schema"].keys())
+                for i in range(len(entry)):
+                    if type(entry[i])==datetime.datetime:
+                        entryData[listOfColumn[i]] = str(entry[i])
+                    else:
+                        entryData[listOfColumn[i]] = entry[i]
+                ret["documents"].append(entryData)
         except:
             traceback.print_exc()
         return ret

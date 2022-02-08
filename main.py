@@ -12,3 +12,4 @@ assembleeNationale = AssembleeNationale.AssembleeNationale(verbose=2, setup=Fals
 #assembleeNationale.processSources("AssembleeNationale/data/", r["updatedSources"])
 print(assembleeNationale.search("tester manger"))
 #print(assembleeNationale.getDossierLegislatifByUid("PIONANR5L15B3619"))
+assembleeNationale.getDossierLegislatifdocumentsByUid("DLR5L15N37471")

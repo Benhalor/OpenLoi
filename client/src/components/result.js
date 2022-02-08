@@ -7,6 +7,9 @@ import DocumentLegislatif from './document_legislatif';
 class Result extends React.Component {
     constructor(props) {
         super(props);
+        this.state = { dossierLegislatif: null, documentsDossierLegislatif:null };
+        this.getDossierLegislatif(this.props.dossierUid)
+        this.getDocumentsDossierLegislatif(this.props.dossierUid)
     }
 
     firstLetterUppercase(string) {
@@ -29,50 +32,88 @@ class Result extends React.Component {
         return `${day} ${monthName} ${year} `;
     }
 
+    getDossierLegislatif(uid) {
+        fetch('http://localhost:5000/api/dossierLegislatif/' + uid)
+            .then(response => response.json())
+            .then(
+                (result) => {
+                    this.setState({ dossierLegislatif: result })
+
+                }
+
+            )
+    }
+
+    getDocumentsDossierLegislatif(uid) {
+        fetch('http://localhost:5000/api/documentsDossierLegislatif/' + uid)
+            .then(response => response.json())
+            .then(
+                (result) => {
+                    this.setState({ documentsDossierLegislatif: result })
+
+                }
+
+            )
+    }
+
+    extractDossierStatus(arrayOfEtapes){
+        var lastEtape = JSON.parse(arrayOfEtapes).acteLegislatif
+        if (Array.isArray(lastEtape)){
+            lastEtape = lastEtape.slice(-1)[0]
+        }
+        return lastEtape.libelleActe.nomCanonique
+    }
 
 
     render() {
 
+        if (this.state.dossierLegislatif !== null && this.state.documentsDossierLegislatif !== null) {
+            return (
+                <div className="resultBloc">
 
-        return (
-            <div className="resultBloc">
-                <div className="row result-bloc-row">
-                    <div className="col text-column">
-                        <div className="row">
 
-                            &#128193; Dossier Législatif
+                    <div className="row result-bloc-row">
+                        <div className="col text-column">
+                            <div className="row">
+
+                                &#128193; Dossier Législatif 
+
+                            </div>
+                            <div className="row entete">
+                                <Highlighter
+                                    searchWords={this.props.query.split(' ')}
+                                    autoEscape={true}
+                                    textToHighlight={this.state.dossierLegislatif.titre} />
+                                    - {this.extractDossierStatus(this.state.dossierLegislatif.actesLegislatifs)}
+
+                            </div>
 
                         </div>
-                        <div className="row entete">
-                            <Highlighter
-                                searchWords={this.props.query.split(' ')}
-                                autoEscape={true}
-                                textToHighlight={this.firstLetterUppercase((this.props.data.dossier.titre))} />
 
+                        <div className="left-align">
+                            {
+                                this.state.dossierLegislatif.anChemin === null
+                                    ? <button className="btn" >
+                                        ---
+                                    </button>
+                                    : <a className="btn" target="_blank" rel="noopener noreferrer" href={"https://www.assemblee-nationale.fr/dyn/15/dossiers/alt/" + this.state.dossierLegislatif.anChemin}>
+                                        Voir ↗
+                                    </a>
+                            }
+
+                            <div className="uid">
+                                {this.props.dossierUid}
+                                
+                            </div>
                         </div>
-                        
                     </div>
-
-                    <div className="left-align">
-                        {
-                            this.props.data.dossier.anChemin === null
-                                ? <button className="btn" >
-                                    ---
-                                </button>
-                                : <a className="btn" target="_blank" rel="noopener noreferrer" href={"https://www.assemblee-nationale.fr/dyn/15/dossiers/alt/" + this.props.data.dossier.anChemin}>
-                                    Voir ↗
-                                </a>
-                        }
-
-                        <div className="uid">
-                            {this.props.dossierUid}
-                        </div>
+                    <div className="col">
+                        {this.state.documentsDossierLegislatif.documents.map((data) => <DocumentLegislatif key={data.uid} data = {data} query={this.props.query} />)}
                     </div>
-                </div>
-                <div className="col">
-                {this.props.data.documents.map((data) => <DocumentLegislatif key={data.uid} data = {data} query={this.props.query} />)}
-                </div>
-            </div>);
+                </div>);
+        } else {
+            return null
+        }
 
 
     }
@@ -90,3 +131,10 @@ export default Result
                             </a>
                         }
                         */
+
+
+
+/*
+
+
+                */

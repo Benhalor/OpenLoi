@@ -3,18 +3,18 @@ import React, { Component } from 'react';
 class NameForm extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { value: '', numberOfResults: null };
+    this.state = { userQuery: '', numberOfResults: null };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   handleChange(event) {
-    this.setState({ value: event.target.value });
+    this.setState({ userQuery: event.target.value });
   }
 
   handleSubmit(event) {
-    this.updateSearchResults(this.state.value)
+    this.updateSearchResults(this.state.userQuery)
     event.preventDefault();
   }
 
@@ -38,7 +38,7 @@ class NameForm extends React.Component {
           Rechercher :
         </label>
         <div className="col autocomplete">
-          <input type="search" className="autocomplete-input" value={this.state.value} autoComplete="off" onChange={this.handleChange} placeholder="Ex: crypto" />
+          <input type="search" className="autocomplete-input" value={this.state.userQuery} autoComplete="off" onChange={this.handleChange} placeholder="Ex: crypto" />
         </div>
       </form>
     );
