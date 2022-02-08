@@ -131,6 +131,33 @@ a {
     font-size: 1em;
 }
 
+.resultBloc {
+    display: flex;
+    flex-direction: column;
+    padding: 5vh 0rem;
+    background: white;
+    border-radius: 2rem;
+    border:1px;
+    text-align: center;
+    box-shadow: rgb(0 0 0 / 8%) 0px 0.3rem 0.25rem;
+    margin-top : 2vh;
+    margin-bottom : 2vh;
+    margin-left : 2vh;
+    margin-right : 2vh;
+}
+
+.subResultBloc {
+    display: flex;
+    flex-direction: column;
+    padding: 9vh 3.2rem;
+    background: rgb(255, 255, 255);
+    border:1px;
+    text-align: center;
+    margin-top : 0vh;
+    padding:0rem;
+    border-top: 1px solid rgb(222, 226, 230) !important;
+}
+
 /* Inidividual result*/
 .btn {
     background-color: rgb(85, 97, 217);
@@ -161,5 +188,25 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
 
 .text-column {
     text-align: justify ;
-    min-width: 40vw;
+    padding-right:3rem;
+
+}
+.result-bloc-row{
+    padding-left:3rem;
+    padding-right:3rem;
+    margin-top : 1vh;
+    margin-bottom : 1vh;
+}
+
+.text-column-sub {
+    padding-left:3rem;
+    padding-right:3rem;
+    margin-top : 1vh;
+    margin-bottom : 1vh;
+    text-align: justify ;
+}
+
+.left-align{
+    justify-content: flex-end !important;
+    padding-top:0.5rem;
 }

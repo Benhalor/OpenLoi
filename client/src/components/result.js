@@ -36,9 +36,9 @@ class Result extends React.Component {
 
         return (
             <div className="resultBloc">
-                <div className="row">
+                <div className="row result-bloc-row">
                     <div className="col text-column">
-                        <div className="row ">
+                        <div className="row">
 
                             &#128193; Dossier Législatif
 
@@ -50,23 +50,17 @@ class Result extends React.Component {
                                 textToHighlight={this.firstLetterUppercase((this.props.data.dossier.titre))} />
 
                         </div>
-                        <div className="row">
-                            Dépôt:
-                        </div>
-                        <div className="row">
-
-
-                        </div>
+                        
                     </div>
 
-                    <div className="col">
+                    <div className="left-align">
                         {
                             this.props.data.dossier.anChemin === null
                                 ? <button className="btn" >
                                     ---
                                 </button>
                                 : <a className="btn" target="_blank" rel="noopener noreferrer" href={"https://www.assemblee-nationale.fr/dyn/15/dossiers/alt/" + this.props.data.dossier.anChemin}>
-                                    Voir plus
+                                    Voir ↗
                                 </a>
                         }
 
@@ -75,7 +69,7 @@ class Result extends React.Component {
                         </div>
                     </div>
                 </div>
-                <div className="row">
+                <div className="col">
                 {this.props.data.documents.map((data) => <DocumentLegislatif key={data.uid} data = {data} query={this.props.query} />)}
                 </div>
             </div>);

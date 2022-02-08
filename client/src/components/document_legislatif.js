@@ -32,12 +32,12 @@ class DocumentLegislatif extends React.Component {
 
 
         return (
-            <div className="resultBloc">
+            <div className="subResultBloc">
                 <div className="row">
-                    <div className="col text-column">
+                    <div className="col text-column-sub">
                         <div className="row entete">
                             <div className="col">
-                                {this.props.data.denominationStructurelle}
+                                {this.props.data.denominationStructurelle} - le {this.convertDate(this.props.data.dateDepot)}
                             </div>
                         </div>
                         <div className="row">
@@ -48,24 +48,15 @@ class DocumentLegislatif extends React.Component {
 
                         </div>
                         <div className="row">
-                            Dépôt: {this.convertDate(this.props.data.dateDepot)}
+                            
                         </div>
                         <div className="row">
 
-                            {this.props.data.datePublication === null
-                                ? "Non publié"
-                                : "Publication: " + this.convertDate(this.props.data.datePublication)}
+                            
                         </div>
                     </div>
 
-                    <div className="col">
-                        <button className="btn">
-                            Lien
-                        </button>
-                        <div className="uid">
-                            {this.props.data.uid}
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
         );
@@ -75,3 +66,23 @@ class DocumentLegislatif extends React.Component {
 }
 
 export default DocumentLegislatif
+
+/*<div className="col">
+                        <button className="btn">
+                            Lien
+                        </button>
+                        <div className="uid">
+                            {this.props.data.uid}
+                        </div>
+                    </div>
+                    
+                    
+                    
+                    
+                    
+                    {this.props.data.datePublication === null
+                                ? "Non publié"
+                                : "Publication: " + this.convertDate(this.props.data.datePublication)}
+                                
+                                
+                                */

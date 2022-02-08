@@ -63,6 +63,7 @@ class AssembleeNationale:
                 "titre": {"path": "dossierParlementaire:titreDossier:titre", "htmlEscape": True, "type": "VARCHAR ( 2000 )", "search": True},
                 "senatChemin": {"path": "dossierParlementaire:titreDossier:senatChemin", "htmlEscape": False, "type": "VARCHAR ( 2000 )", "search": False},
                 "anChemin": {"path": "dossierParlementaire:titreDossier:titreChemin", "htmlEscape": False, "type": "VARCHAR ( 2000 )", "search": False},
+                "actesLegislatifs": {"path": "dossierParlementaire:actesLegislatifs", "htmlEscape": True, "type": "VARCHAR ( 200000 )", "search": False},
                 
             }
         }
@@ -374,6 +375,8 @@ class AssembleeNationale:
                     docPath = docPath[pathIter]
                 if docPath is not None:
                     columnString += columnName+","
+                    if type(docPath)==dict:
+                        docPath = json.dumps(docPath)
                     if columnDef["htmlEscape"]:
                         valuesString += "\'"+self.__htmlEscape(docPath)+"\',"
                     else:
@@ -395,7 +398,7 @@ class AssembleeNationale:
 	"""
 
     def search(self, term, maxNumberOfResults = 1000):
-        processedQuery = term.replace("'", "\\'").replace("--", "").replace(" ","<5>")
+        processedQuery = term.replace("'", "\\'").replace("--", "")
         listOfTables = 0
         connection = psycopg2.connect(
             database=self.__database, user='postgres', password='password', host='localhost', port='5432'
@@ -406,9 +409,17 @@ class AssembleeNationale:
         ret = {}
         ret["data"] = {}
         ret["count"]=0
-        ret["query"]=term
-        totalCount = 0
 
+        # First get the radicals (use for highlight in react)
+        try:
+            cursor.execute("SELECT to_tsvector('french', %s);", (processedQuery,))
+            ret["query"] = " ".join(cursor.fetchone()[0].split("'")[1::2])
+            totalCount = 0
+        except:
+            traceback.print_exc()
+        processedQuery = processedQuery.replace(" ","<5>")
+
+        # Then get the results
         tableDef = self.__dossierLegislatifDocumentTableDefinition
         query = "SELECT "
         for key in tableDef["schema"].keys():
@@ -451,7 +462,11 @@ class AssembleeNationale:
 	"""
 
     def __htmlEscape(self, string):
-        return string.replace("'", "''")
+        try:
+            ret = string.replace("'", "''")
+        except:
+            traceback.print_exc()
+        return ret
 
 
     """getDossierLegislatifByUid
