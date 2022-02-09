@@ -158,6 +158,20 @@ a {
     border-top: 1px solid rgb(222, 226, 230) !important;
 }
 
+.titleSubResultBloc {
+    display: flex;
+    flex-direction: column;
+    padding: 2vh 3.2rem;
+    background: rgb(239, 241, 243);
+    border:1px;
+    text-align: center;
+    margin-top : 0vh;
+    border-top: 1px solid rgb(222, 226, 230) !important;
+    border-bottom: 1px solid rgb(222, 226, 230) !important;
+    font-size: 1.5rem;
+    text-align: left;
+}
+
 /* Inidividual result*/
 .btn {
     background-color: rgb(85, 97, 217);
@@ -216,4 +230,8 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
     font-size: 1rem;
     padding-top:0.2rem;
     padding-left:1rem;
+}
+
+.plusminus{
+    font-size: 1rem;
 }

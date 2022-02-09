@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Highlighter from "react-highlight-words";
+import convertDate from './utils'
 
 class DocumentLegislatif extends React.Component {
     constructor(props) {
@@ -9,23 +10,6 @@ class DocumentLegislatif extends React.Component {
     firstLetterUppercase(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
-
-    convertDate(str) {
-        var date = new Date(str)
-        let monthNames = ["jan.", "fev.", "mars", "avril",
-            "mai", "juin", "juill.", "août",
-            "sept.", "oct.", "nov.", "dec."];
-
-        let day = date.getDate();
-
-        let monthIndex = date.getMonth();
-        let monthName = monthNames[monthIndex];
-
-        let year = date.getFullYear();
-
-        return `${day} ${monthName} ${year} `;
-    }
-
 
 
     render() {
@@ -37,7 +21,7 @@ class DocumentLegislatif extends React.Component {
                     <div className="col text-column-sub">
                         <div className="row entete">
                             <div className="col">
-                                {this.props.data.denominationStructurelle} - le {this.convertDate(this.props.data.dateDepot)}
+                                {this.props.data.denominationStructurelle} - le {convertDate(this.props.data.dateDepot)}
                             </div>
                         </div>
                         <div className="row">
