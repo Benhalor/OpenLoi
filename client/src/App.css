@@ -210,3 +210,10 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
     justify-content: flex-end !important;
     padding-top:0.5rem;
 }
+
+.dossierStatus{
+    color: rgb(108, 117, 125);
+    font-size: 1rem;
+    padding-top:0.2rem;
+    padding-left:1rem;
+}

@@ -40,7 +40,7 @@ class AssembleeNationale:
 
         self.__dossierLegislatifDocumentTableDefinition = {
             "tableName": "DOSSIERS_LEGISLATIFS_DOCUMENT",
-            "source":"AN",
+            "source": "AN",
             "schema": {
                 "uid": {"path": "document:uid", "htmlEscape": False, "type": "VARCHAR ( 20 ) PRIMARY KEY", "search": True},
                 "dateCreation": {"path": "document:cycleDeVie:chrono:dateCreation", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
@@ -57,20 +57,21 @@ class AssembleeNationale:
 
         self.__dossierLegislatifDossierParlementaireTableDefinition = {
             "tableName": "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE",
-            "source":"AN",
+            "source": "AN",
             "schema": {
                 "uid": {"path": "dossierParlementaire:uid", "htmlEscape": False, "type": "VARCHAR ( 20 ) PRIMARY KEY", "search": True},
                 "titre": {"path": "dossierParlementaire:titreDossier:titre", "htmlEscape": True, "type": "VARCHAR ( 2000 )", "search": True},
                 "senatChemin": {"path": "dossierParlementaire:titreDossier:senatChemin", "htmlEscape": False, "type": "VARCHAR ( 2000 )", "search": False},
                 "anChemin": {"path": "dossierParlementaire:titreDossier:titreChemin", "htmlEscape": False, "type": "VARCHAR ( 2000 )", "search": False},
                 "actesLegislatifs": {"path": "dossierParlementaire:actesLegislatifs", "htmlEscape": True, "type": "VARCHAR ( 200000 )", "search": False},
-                
+                "lastUpdate": {"path": "", "htmlEscape": True, "type": "TIMESTAMP WITH TIME ZONE", "search": False, "specialFunction": self.__extractLastDateDossierParlementaire},
+
             }
         }
 
         self.__tableList = {
-            "DOSSIERS_LEGISLATIFS_DOCUMENT":self.__dossierLegislatifDocumentTableDefinition,
-            "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE":self.__dossierLegislatifDossierParlementaireTableDefinition,
+            "DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
+            "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE": self.__dossierLegislatifDossierParlementaireTableDefinition,
         }
 
         self.__database = 'assembleenationale'
@@ -135,12 +136,14 @@ class AssembleeNationale:
 
             # Create searching index
             try:
-                query = "ALTER TABLE "+tableDef["tableName"]+" ADD COLUMN ts tsvector GENERATED ALWAYS AS (to_tsvector('french',"
+                query = "ALTER TABLE " + \
+                    tableDef["tableName"] + \
+                        " ADD COLUMN ts tsvector GENERATED ALWAYS AS (to_tsvector('french',"
                 columnString = ""
                 for columnName, columnDef in tableDef["schema"].items():
                     if (columnDef["search"]):
                         columnString += columnName + "|| ' ' ||"
-                columnString= columnString[:-9]
+                columnString = columnString[:-9]
                 query += columnString
                 query += ")) STORED;"
                 cursor.execute(query)
@@ -370,22 +373,27 @@ class AssembleeNationale:
         valuesString = ""
         for columnName, columnDef in tableDef["schema"].items():
             try:
-                docPath = doc
-                for pathIter in columnDef["path"].split(":"):
-                    docPath = docPath[pathIter]
-                if docPath is not None:
-                    columnString += columnName+","
-                    if type(docPath)==dict:
-                        docPath = json.dumps(docPath)
-                    if columnDef["htmlEscape"]:
-                        valuesString += "\'"+self.__htmlEscape(docPath)+"\',"
-                    else:
-                        valuesString += "\'"+docPath+"\',"
+                specialValue = columnDef["specialFunction"](doc)["value"]
+                columnString += columnName+","
+                valuesString += "\'"+specialValue+"\',"
             except KeyError:
-                pass
-            except:
-                traceback.print_exc()
-
+                try:
+                    docPath = doc
+                    for pathIter in columnDef["path"].split(":"):
+                        docPath = docPath[pathIter]
+                    if docPath is not None:
+                        columnString += columnName+","
+                        if type(docPath) == dict:
+                            docPath = json.dumps(docPath)
+                        if columnDef["htmlEscape"]:
+                            valuesString += "\'" + \
+                                self.__htmlEscape(docPath)+"\',"
+                        else:
+                            valuesString += "\'"+docPath+"\',"
+                except KeyError:
+                    pass
+                except:
+                    traceback.print_exc()
         query += columnString[:-1] + ") VALUES (" + valuesString[:-1]+");"
         return query
 
@@ -397,7 +405,7 @@ class AssembleeNationale:
 					
 	"""
 
-    def search(self, term, maxNumberOfResults = 10):
+    def search(self, term, maxNumberOfResults=10):
         processedQuery = term.replace("'", "\\'").replace("--", "")
         listOfTables = 0
         connection = psycopg2.connect(
@@ -408,16 +416,17 @@ class AssembleeNationale:
 
         ret = {}
         ret["listOfDossiersLegislatifs"] = []
-        ret["count"]=0
+        ret["count"] = 0
 
         # First get the radicals (use for highlight in react)
         try:
-            cursor.execute("SELECT to_tsvector('french', %s);", (processedQuery,))
+            cursor.execute("SELECT to_tsvector('french', %s);",
+                           (processedQuery,))
             ret["query"] = " ".join(cursor.fetchone()[0].split("'")[1::2])
             totalCount = 0
         except:
             traceback.print_exc()
-        processedQuery = processedQuery.replace(" ","<3>")
+        processedQuery = processedQuery.replace(" ", "<3>")
 
         # Then get the results
         tableDef = self.__dossierLegislatifDocumentTableDefinition
@@ -431,23 +440,67 @@ class AssembleeNationale:
             cursor.execute(query, (processedQuery,))
             count = 0
             for entry in cursor.fetchall():
-                if count<maxNumberOfResults:
+                if count < maxNumberOfResults:
                     entryData = {}
                     listOfColumn = list(
                         tableDef["schema"].keys())
                     for i in range(len(entry)):
-                        if type(entry[i])==datetime.datetime:
+                        if type(entry[i]) == datetime.datetime:
                             entryData[listOfColumn[i]] = str(entry[i])
                         else:
                             entryData[listOfColumn[i]] = entry[i]
                     if entryData["dossierRef"] not in ret["listOfDossiersLegislatifs"]:
-                        ret["listOfDossiersLegislatifs"].append(entryData["dossierRef"])
-                count+=1
-                totalCount+=1
+                        ret["listOfDossiersLegislatifs"].append(
+                            entryData["dossierRef"])
+                count += 1
+                totalCount += 1
         except:
             traceback.print_exc()
-        ret["count"]=totalCount
+        ret["count"] = totalCount
+        ret["listOfDossiersLegislatifs"] = self.__sortDossierLegislatifsUid(ret["listOfDossiersLegislatifs"])
         return json.dumps(ret)
+
+
+
+    """__sortDossierLegislatifsUid
+				return a dossier legislatif by its uid
+				@params uid : uid of dossier
+				@return : list of {uid, date} order by date desc
+					
+	"""
+
+    def __sortDossierLegislatifsUid(self, uidList):
+        tableDef = self.__dossierLegislatifDossierParlementaireTableDefinition
+
+        connection = psycopg2.connect(
+            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
+        )
+        connection.autocommit = True
+        cursor = connection.cursor()
+
+        uidAndDateList = []
+        for uid in uidList:
+            lastUpdate = None
+            ret = {}
+            query = "SELECT lastUpdate FROM DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE WHERE uid=%s;"
+
+            try:
+                cursor.execute(query, (uid,))
+                entry = cursor.fetchone()
+                lastUpdate = entry[0]
+            except:
+                traceback.print_exc()
+            uidAndDateList.append({"uid":uid, "date":lastUpdate})
+        
+        # sort list on date
+        uidAndDateList.sort(key = lambda x:x['date'], reverse=True)
+        ret = []
+        for element in uidAndDateList:
+            ret.append(element["uid"])
+
+        return ret
+
+
 
     """__htmlEscape
 				Escape some char string
@@ -462,7 +515,6 @@ class AssembleeNationale:
         except:
             traceback.print_exc()
         return ret
-
 
     """getDossierLegislatifByUid
 				return a dossier legislatif by its uid
@@ -486,10 +538,10 @@ class AssembleeNationale:
             query += key + ","
         query = query[:-1]
         query += " FROM DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE WHERE uid=%s;"
-    
+
         try:
             cursor.execute(query, (uid,))
-            entry = cursor.fetchone()   
+            entry = cursor.fetchone()
             listOfColumn = list(
                 tableDef["schema"].keys())
             for i in range(len(entry)):
@@ -521,7 +573,7 @@ class AssembleeNationale:
             query += key + ","
         query = query[:-1]
         query += " FROM DOSSIERS_LEGISLATIFS_DOCUMENT WHERE dossierRef=%s ORDER BY dateDepot DESC;"
-    
+
         try:
             cursor.execute(query, (uid,))
             for entry in cursor.fetchall():
@@ -529,11 +581,53 @@ class AssembleeNationale:
                 listOfColumn = list(
                     tableDef["schema"].keys())
                 for i in range(len(entry)):
-                    if type(entry[i])==datetime.datetime:
+                    if type(entry[i]) == datetime.datetime:
                         entryData[listOfColumn[i]] = str(entry[i])
                     else:
                         entryData[listOfColumn[i]] = entry[i]
                 ret["documents"].append(entryData)
         except:
-            traceback.print_exc()
+            pass
         return ret
+
+    """__extractLastDateDossierParlementaire
+				extract last updated date of a dossier parlementaire
+				@params dossier : json of dossier
+				@return : 
+					
+	"""
+    def __extractLastDateDossierParlementaire(self, dossier):
+        lastDateString = "1970-01-01T01:00:00.000+00:00"
+        lastDateDatetime = datetime.datetime.strptime(
+            lastDateString, "%Y-%m-%dT%H:%M:%S.%f%z")
+
+        try:
+            for key, value in dossier.items():
+                tempLastDatetime = None
+                if isinstance(value, dict):
+                    ret = self.__extractLastDateDossierParlementaire(value)
+                    tempLastDatetime = ret["lastDateDatetime"]
+                    tempLastDateString = ret["lastDateString"]
+                elif isinstance(value, list):
+                    for doc in value:
+                        if isinstance(doc, dict):
+                            ret = self.__extractLastDateDossierParlementaire(doc)
+                            tempLastDatetime = ret["lastDateDatetime"]
+                            tempLastDateString = ret["lastDateString"]
+                            if tempLastDatetime > lastDateDatetime:
+                                lastDateDatetime = tempLastDatetime
+                                lastDateString = tempLastDateString
+                else:
+                    if key == "dateActe" and value is not None:
+                        tempLastDatetime = datetime.datetime.strptime(
+                            value, "%Y-%m-%dT%H:%M:%S.%f%z")
+                        tempLastDateString = value
+                if tempLastDatetime is not None:
+                    if tempLastDatetime > lastDateDatetime:
+                        lastDateDatetime = tempLastDatetime
+                        lastDateString = tempLastDateString
+        except:
+            traceback.print_exc()
+            print(dossier)
+
+        return {"value": lastDateString, "lastDateString": lastDateString, "lastDateDatetime": lastDateDatetime}

@@ -7,7 +7,7 @@ import DocumentLegislatif from './document_legislatif';
 class Result extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { dossierLegislatif: null, documentsDossierLegislatif:null };
+        this.state = { dossierLegislatif: null, documentsDossierLegislatif: null };
         this.getDossierLegislatif(this.props.dossierUid)
         this.getDocumentsDossierLegislatif(this.props.dossierUid)
     }
@@ -56,14 +56,29 @@ class Result extends React.Component {
             )
     }
 
-    extractDossierStatus(arrayOfEtapes){
+    extractDossierStatus(arrayOfEtapes) {
         var lastEtape = JSON.parse(arrayOfEtapes).acteLegislatif
-        if (Array.isArray(lastEtape)){
+        if (Array.isArray(lastEtape)) {
             lastEtape = lastEtape.slice(-1)[0]
         }
         return lastEtape.libelleActe.nomCanonique
     }
 
+    convertDate(str) {
+        var date = new Date(str)
+        let monthNames = ["jan.", "fev.", "mars", "avril",
+            "mai", "juin", "juill.", "août",
+            "sept.", "oct.", "nov.", "dec."];
+
+        let day = date.getDate();
+
+        let monthIndex = date.getMonth();
+        let monthName = monthNames[monthIndex];
+
+        let year = date.getFullYear();
+
+        return `${day} ${monthName} ${year} `;
+    }
 
     render() {
 
@@ -76,16 +91,16 @@ class Result extends React.Component {
                         <div className="col text-column">
                             <div className="row">
 
-                                &#128193; Dossier Législatif 
+                                &#128193; Dossier Législatif<span className="dossierStatus">  ▪ {this.extractDossierStatus(this.state.dossierLegislatif.actesLegislatifs)}</span>
+                                
 
                             </div>
                             <div className="row entete">
                                 <Highlighter
                                     searchWords={this.props.query.split(' ')}
                                     autoEscape={true}
-                                    textToHighlight={this.state.dossierLegislatif.titre} />
-                                    - {this.extractDossierStatus(this.state.dossierLegislatif.actesLegislatifs)}
-
+                                    textToHighlight={this.state.dossierLegislatif.titre } />
+                                    {this.convertDate(this.state.dossierLegislatif.lastUpdate)}
                             </div>
 
                         </div>
@@ -103,12 +118,12 @@ class Result extends React.Component {
 
                             <div className="uid">
                                 {this.props.dossierUid}
-                                
+
                             </div>
                         </div>
                     </div>
                     <div className="col">
-                        {this.state.documentsDossierLegislatif.documents.map((data) => <DocumentLegislatif key={data.uid} data = {data} query={this.props.query} />)}
+                        {this.state.documentsDossierLegislatif.documents.map((data) => <DocumentLegislatif key={data.uid} data={data} query={this.props.query} />)}
                     </div>
                 </div>);
         } else {
