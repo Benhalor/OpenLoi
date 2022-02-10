@@ -110,12 +110,12 @@ a {
     width: 100%;
     border-width: 0px;  
     border-radius: 1.2rem;
-    font-size: 2rem;
+    font-size: 1.8rem;
 }
 
 .autocomplete {
     font-size: 2rem;
-    min-width: 30vw;
+    min-width: 40vw;
     margin-left:1.5rem;
 }
 
@@ -265,4 +265,9 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
     box-shadow: rgb(0 0 0 / 8%) 0px 0.3rem 0.25rem;
     border-radius: 0.4rem;
     padding: 0.5rem 0.5rem;
+}
+
+.deputeNames {
+    color: rgb(108, 117, 125);
+    font-size: 1rem;
 }

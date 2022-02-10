@@ -65,6 +65,17 @@ class DossierLegislatif extends React.Component {
         return lastEtape.libelleActe.nomCanonique + " - " + assemblee
     }
 
+    sanitizeWords(string) {
+        return string.normalize("NFD").replace(/\p{Diacritic}/gu, "")
+    }
+
+    generateSearchWords(spacedSeparatedWords) {
+        var listOfWords = spacedSeparatedWords.split(" ")
+        for (var i = 0; i < listOfWords.length; i++) {
+            listOfWords[i] = "\\b(?=\\w*" + listOfWords[i] + ")\\w+\\b"
+        }
+        return listOfWords
+    }
 
 
     render() {
@@ -84,9 +95,10 @@ class DossierLegislatif extends React.Component {
                             </div>
                             <div className="row entete">
                                 <Highlighter
-                                    searchWords={this.props.query.split(' ')}
-                                    autoEscape={true}
+                                    searchWords={this.props.query == "" ? [] : this.generateSearchWords(this.props.query)}
+                                    sanitize={this.sanitizeWords}
                                     textToHighlight={this.state.dossierLegislatif.titre} />
+
 
                             </div>
                             <span className="dossierStatus">  ⏲ Derniers éléments du {convertDate(this.state.dossierLegislatif.lastUpdate)}</span>
@@ -114,7 +126,7 @@ class DossierLegislatif extends React.Component {
                             {this.state.displayEtapes ? "➖" : "➕"} Élements du dossier 📖
                         </div>
                         {this.state.displayEtapes && this.state.documentsDossierLegislatif.documents.map((data) => <DocumentLegislatif key={data.uid} data={data} query={this.props.query} />)}
-                       
+
                     </div>
 
                 </div>);

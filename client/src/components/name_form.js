@@ -14,13 +14,30 @@ class NameForm extends React.Component {
   }
 
   handleSubmit(event) {
-    this.updateSearchResults(this.state.userQuery)
+    if (this.state.userQuery == "") {
+      this.getLastNews()
+    } else {
+      this.updateSearchResults(this.state.userQuery)
+    }
+
     event.preventDefault();
   }
 
- 
+
   updateSearchResults(query) {
     fetch('http://localhost:5000/api/search/' + query)
+      .then(response => response.json())
+      .then(
+        (result) => {
+          this.props.pullResults(result)
+
+        }
+
+      )
+  }
+
+  getLastNews() {
+    fetch('http://localhost:5000/api/lastNews/')
       .then(response => response.json())
       .then(
         (result) => {

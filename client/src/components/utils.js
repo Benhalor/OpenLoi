@@ -1,4 +1,5 @@
 function convertDate(str) {
+
     var date = new Date(str)
     let monthNames = ["jan.", "fev.", "mars", "avril",
         "mai", "juin", "juill.", "août",

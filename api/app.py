@@ -37,6 +37,17 @@ def getSearchResults(query):
         # 405 Method Forbidden
         abort(405)
 
+@app.route("/api/lastNews/", methods=['GET'])
+def getLastNews():
+    if request.method == 'GET':
+        ret = assembleeNationale.getLastNews()
+        print(ret)
+        return ret
+
+    else:
+        # 405 Method Forbidden
+        abort(405)
+
 @app.route("/api/documentsDossierLegislatif/<string:uid>", methods=['GET'])
 def getDocumentsDossierLegislatif(uid):
     if request.method == 'GET':

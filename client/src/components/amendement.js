@@ -11,17 +11,26 @@ class Amendement extends React.Component {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
 
-    extractStatus(){
-        if (this.props.data.etat == "Irrecevable"){
-            return "Irrecevable (" + this.props.data.sousEtat+")⚠";
-        } else if (this.props.data.sort == "Adopté"){
-            return "Adopté le " + convertDate(this.props.data.dateSort)+"✅";
-        } else if (this.props.data.sort == "Rejeté"){
-            return "Rejeté le " + convertDate(this.props.data.dateSort)+"❌";
-        } else if (this.props.data.sort == "Retiré"){
-            return "Retiré le " + convertDate(this.props.data.dateSort)+"🚪";
+    extractStatus() {
+        if (this.props.data.etat.includes("Irrecevable")) {
+            return "Irrecevable (" + this.props.data.sousEtat + ")⚠";
+        } else if (this.props.data.sort == "Adopté") {
+            return "Adopté le " + convertDate(this.props.data.dateSort) + "✅";
+        } else if (this.props.data.sort == "Rejeté") {
+            return "Rejeté le " + convertDate(this.props.data.dateSort) + "❌";
+        } else if (this.props.data.sort.includes("Retiré") || this.props.data.etat.includes("Retiré")) {
+            if (this.props.data.dateSort !== null) {
+                return "Retiré le " + convertDate(this.props.data.dateSort) + "🚪";
+            } else {
+                return "Retiré🚪";
+            }
+
+        } else if (this.props.data.sort == "Tombé") {
+            return "Tombé le " + convertDate(this.props.data.dateSort) + "🪂";
+        } else if (this.props.data.sort == "Non soutenu") {
+            return "Non soutenu le " + convertDate(this.props.data.dateSort) + "😑";
         } else {
-            return this.props.data.sort + "" + this.props.data.etat + " " + this.props.data.sousEtat
+            return this.props.data.sort + "|" + this.props.data.etat + "| " + this.props.data.sousEtat
         }
     }
 
@@ -47,11 +56,11 @@ class Amendement extends React.Component {
 
 
                         </div>
-                        <div className="row" >
+                        <div className="row deputeNames" >
                             <div dangerouslySetInnerHTML={{ __html: this.props.data.signataires }} />
                         </div>
-                        <div className="row" >
-                              {this.props.data.uid}
+                        <div className="row uid" >
+                            {this.props.data.uid}
                         </div>
 
 

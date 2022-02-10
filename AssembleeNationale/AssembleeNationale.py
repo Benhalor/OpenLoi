@@ -85,8 +85,8 @@ class AssembleeNationale:
         }
 
         self.__tableList = {
-            #"DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
-            #"DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE": self.__dossierLegislatifDossierParlementaireTableDefinition,
+            # "DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
+            # "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE": self.__dossierLegislatifDossierParlementaireTableDefinition,
             "AMENDEMENT": self.__amendementTableDefinition,
         }
 
@@ -102,7 +102,7 @@ class AssembleeNationale:
 
     """setupDatabase
 			Setup the postgredatabase with the schema
-			@params  : 
+			@params  :
 
 	"""
 
@@ -178,7 +178,7 @@ class AssembleeNationale:
 			@params dataDirectory : directory to store datas
 			@params pollingFrequency : Download only if last version of the local file is older than pollingFrequency. In s
 			@return : a dict {"duration":downloadDuration, "updatedSources":updatedSources}
-				
+
 	"""
 
     def downloadSources(self, dataDirectory, sourceList=None):
@@ -237,8 +237,8 @@ class AssembleeNationale:
 			Download files from a source list and store them in a specified directory
 			@params dataDirectory : directory to store datas
 			@params sourceList : a list of path of file to process
-			@return : 
-				
+			@return :
+
 	"""
 
     def processSources(self, dataDirectory, sourceList):
@@ -252,8 +252,8 @@ class AssembleeNationale:
     """__processExcelCsv
 			Process files that have a csv format
 			@params path : path of the excel csv file to process
-			@return : 
-				
+			@return :
+
 	"""
 
     def __processExcelCsv(self, path):
@@ -266,8 +266,8 @@ class AssembleeNationale:
 			Process files that are json compressed in zip
 			@params path : path of the json zip file to process
 			@params replace : wether to replace if an existing unzipped directory is there.
-			@return : 
-				
+			@return :
+
 	"""
 
     def __processZip(self, path, replace=False):
@@ -329,8 +329,8 @@ class AssembleeNationale:
 				Recursively explore the foler dossierLegislatif and upload to db
 				@params directory : path of the directory
                 @params table : table name
-				@return : 
-					
+				@return :
+
 	"""
 
     def __uploadToDb(self, directory, table="DOSSIERS_LEGISLATIFS_DOCUMENT"):
@@ -339,15 +339,15 @@ class AssembleeNationale:
             connection = psycopg2.connect(
                 database=self.__database, user='postgres', password='password', host='localhost', port='5432'
             )
-            #connection.autocommit = True
+            # connection.autocommit = True
             cursor = connection.cursor()
             count = 0
             lastTime = time.time()
             for root, subdirs, files in os.walk(directory):
                 for fileName in files:
-                    count +=1
-                    if count%10000==0:
-                        print(str(count) +":  "+str(time.time()-lastTime))
+                    count += 1
+                    if count % 10000 == 0:
+                        print(str(count) + ":  "+str(time.time()-lastTime))
                         lastTime = time.time()
                         print(fileName)
                         connection.commit()
@@ -375,8 +375,8 @@ class AssembleeNationale:
 				Build a query to insert an element from a dict defining the table
 				@params doc : json doc (data)
 				@params tableDef : dict defining the table
-				@return : 
-					
+				@return :
+
 	"""
 
     def __buildQueryFromDef(self, doc, tableDef):
@@ -386,7 +386,8 @@ class AssembleeNationale:
         valuesString = ""
         for columnName, columnDef in tableDef["schema"].items():
             if tableDef["tableName"] == "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE" and columnName == "lastUpdate":
-                lastUpdate = self.__extractLastDateDossierParlementaire(doc)["value"]
+                lastUpdate = self.__extractLastDateDossierParlementaire(doc)[
+                    "value"]
                 columnString += columnName+","
                 valuesString += "\'"+lastUpdate+"\',"
             else:
@@ -397,7 +398,7 @@ class AssembleeNationale:
                     if docPath is not None:
                         if type(docPath) == dict:
                             docPath = json.dumps(docPath)
-                            
+
                         if columnDef["type"] == "DATE":
                             try:
                                 datetime.datetime.strptime(docPath, "%Y-%m-%d")
@@ -407,7 +408,8 @@ class AssembleeNationale:
                                 pass
                         elif columnDef["type"] == "TIMESTAMP WITH TIME ZONE":
                             try:
-                                datetime.datetime.strptime(docPath, "%Y-%m-%dT%H:%M:%S%z")
+                                datetime.datetime.strptime(
+                                    docPath, "%Y-%m-%dT%H:%M:%S%z")
                                 valuesString += "\'"+docPath+"\',"
                                 columnString += columnName+","
                             except ValueError:
@@ -430,13 +432,12 @@ class AssembleeNationale:
 				search a term in tables
 				@params term : term to search
                 @params maxNumberOfResults : max number of results to return
-				@return : 
-					
+				@return :
+
 	"""
 
     def search(self, term, maxNumberOfResults=10):
         processedQuery = term.replace("'", "\\'").replace("--", "")
-        listOfTables = 0
         connection = psycopg2.connect(
             database=self.__database, user='postgres', password='password', host='localhost', port='5432'
         )
@@ -452,10 +453,8 @@ class AssembleeNationale:
             cursor.execute("SELECT to_tsvector('french', %s);",
                            (processedQuery,))
             ret["query"] = " ".join(cursor.fetchone()[0].split("'")[1::2])
-            totalCount = 0
         except:
             traceback.print_exc()
-        processedQuery = processedQuery.replace(" ", "<2>")
 
         # Then get the results
         tableDef = self.__dossierLegislatifDocumentTableDefinition
@@ -465,41 +464,145 @@ class AssembleeNationale:
         query = query[:-1]
         query += " FROM DOSSIERS_LEGISLATIFS_DOCUMENT WHERE ts @@ to_tsquery('french',%s);"
 
+        count = 0
+
+        # First try by the words adjacent
+        wordAdjacentListOfDossiersLegislatifs = []
+        processedQueryLogic = processedQuery.replace(" ", "<1>")
         try:
-            cursor.execute(query, (processedQuery,))
-            count = 0
+            cursor.execute(query, (processedQueryLogic,))
+
             for entry in cursor.fetchall():
-                if count < maxNumberOfResults:
-                    entryData = {}
-                    listOfColumn = list(
-                        tableDef["schema"].keys())
-                    for i in range(len(entry)):
-                        if type(entry[i]) == datetime.datetime:
-                            entryData[listOfColumn[i]] = str(entry[i])
-                        else:
-                            entryData[listOfColumn[i]] = entry[i]
-                    if entryData["dossierRef"] not in ret["listOfDossiersLegislatifs"]:
-                        ret["listOfDossiersLegislatifs"].append(
-                            entryData["dossierRef"])
                 count += 1
-                totalCount += 1
+                entryData = {}
+                listOfColumn = list(
+                    tableDef["schema"].keys())
+                for i in range(len(entry)):
+                    if type(entry[i]) == datetime.datetime:
+                        entryData[listOfColumn[i]] = str(entry[i])
+                    else:
+                        entryData[listOfColumn[i]] = entry[i]
+                if entryData["dossierRef"] not in wordAdjacentListOfDossiersLegislatifs:
+                    wordAdjacentListOfDossiersLegislatifs.append(
+                        entryData["dossierRef"])
         except:
             traceback.print_exc()
-        ret["count"] = totalCount
-        ret["listOfDossiersLegislatifs"] = self.__sortDossierLegislatifsUid(
-            ret["listOfDossiersLegislatifs"])
+
+        # Then query with word anywhere in the document
+        wordAnywhereListOfDossiersLegislatifs = []
+        processedQueryLogic = processedQuery.replace(" ", "&")
+        try:
+            cursor.execute(query, (processedQueryLogic,))
+
+            for entry in cursor.fetchall():
+                count += 1
+                entryData = {}
+                listOfColumn = list(
+                    tableDef["schema"].keys())
+                for i in range(len(entry)):
+                    if type(entry[i]) == datetime.datetime:
+                        entryData[listOfColumn[i]] = str(entry[i])
+                    else:
+                        entryData[listOfColumn[i]] = entry[i]
+                if entryData["dossierRef"] not in wordAnywhereListOfDossiersLegislatifs:
+                    wordAnywhereListOfDossiersLegislatifs.append(
+                        entryData["dossierRef"])
+        except:
+            traceback.print_exc()
+
+        # Then query with some of the words in the document
+        wordORListOfDossiersLegislatifs = []
+        processedQueryLogic = processedQuery.replace(" ", "|")
+        try:
+            cursor.execute(query, (processedQueryLogic,))
+
+            for entry in cursor.fetchall():
+                count += 1
+                entryData = {}
+                listOfColumn = list(
+                    tableDef["schema"].keys())
+                for i in range(len(entry)):
+                    if type(entry[i]) == datetime.datetime:
+                        entryData[listOfColumn[i]] = str(entry[i])
+                    else:
+                        entryData[listOfColumn[i]] = entry[i]
+                if entryData["dossierRef"] not in wordORListOfDossiersLegislatifs:
+                    wordORListOfDossiersLegislatifs.append(
+                        entryData["dossierRef"])
+        except:
+            traceback.print_exc()
+
+        ret["count"] = count
+        ret["listOfDossiersLegislatifs"].extend(
+            self.__sortDossierLegislatifsUid(wordAdjacentListOfDossiersLegislatifs))
+        ret["listOfDossiersLegislatifs"].extend(
+            self.__sortDossierLegislatifsUid(wordAnywhereListOfDossiersLegislatifs))
+        ret["listOfDossiersLegislatifs"].extend(
+            self.__sortDossierLegislatifsUid(wordORListOfDossiersLegislatifs))
+        ret["listOfDossiersLegislatifs"] = ret["listOfDossiersLegislatifs"][:maxNumberOfResults]
+        return json.dumps(ret)
+
+    """getLastNews
+				returns last news
+                @params maxNumberOfResults : max number of results to return
+				@return :
+
+	"""
+
+    def getLastNews(self, maxNumberOfResults=100):
+        connection = psycopg2.connect(
+            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
+        )
+        connection.autocommit = True
+        cursor = connection.cursor()
+
+        ret = {}
+        ret["listOfDossiersLegislatifs"] = []
+        ret["count"] = 0
+        ret["query"] = ""
+
+        # Get the results
+        tableDef = self.__dossierLegislatifDossierParlementaireTableDefinition
+        query = "SELECT "
+        for key in tableDef["schema"].keys():
+            query += key + ","
+        query = query[:-1]
+        query += " FROM DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE ORDER BY lastUpdate DESC;"
+
+        count = 0
+
+        # First try by the words adjacent
+        ret["listOfDossiersLegislatifs"] = []
+        try:
+            cursor.execute(query)
+            print(query)
+
+            for entry in cursor.fetchall():
+                count += 1
+                entryData = {}
+                listOfColumn = list(
+                    tableDef["schema"].keys())
+                for i in range(len(entry)):
+                    if type(entry[i]) == datetime.datetime:
+                        entryData[listOfColumn[i]] = str(entry[i])
+                    else:
+                        entryData[listOfColumn[i]] = entry[i]
+                ret["listOfDossiersLegislatifs"].append(entryData["uid"])
+        except:
+            traceback.print_exc()
+
+        ret["count"] = count
+        ret["listOfDossiersLegislatifs"] = ret["listOfDossiersLegislatifs"][:maxNumberOfResults]
         return json.dumps(ret)
 
     """__sortDossierLegislatifsUid
 				return a dossier legislatif by its uid
 				@params uid : uid of dossier
 				@return : list of {uid, date} order by date desc
-					
+
 	"""
 
     def __sortDossierLegislatifsUid(self, uidList):
-        tableDef = self.__dossierLegislatifDossierParlementaireTableDefinition
-
         connection = psycopg2.connect(
             database=self.__database, user='postgres', password='password', host='localhost', port='5432'
         )
@@ -516,9 +619,10 @@ class AssembleeNationale:
                 cursor.execute(query, (uid,))
                 entry = cursor.fetchone()
                 lastUpdate = entry[0]
+                uidAndDateList.append({"uid": uid, "date": lastUpdate})
             except:
                 traceback.print_exc()
-            uidAndDateList.append({"uid": uid, "date": lastUpdate})
+                print(uid)
 
         # sort list on date
         uidAndDateList.sort(key=lambda x: x['date'], reverse=True)
@@ -531,8 +635,8 @@ class AssembleeNationale:
     """__htmlEscape
 				Escape some char string
 				@params string : term to search
-				@return : 
-					
+				@return :
+
 	"""
 
     def __htmlEscape(self, string):
@@ -545,8 +649,8 @@ class AssembleeNationale:
     """getDossierLegislatifByUid
 				return a dossier legislatif by its uid
 				@params uid : uid of dossier
-				@return : 
-					
+				@return :
+
 	"""
 
     def getDossierLegislatifByUid(self, uid):
@@ -579,8 +683,8 @@ class AssembleeNationale:
     """getDossierLegislatifdocumentsByUid
 				return a all documents of dossier legislatif by its uid
 				@params uid : uid of dossier
-				@return : 
-					
+				@return :
+
 	"""
 
     def getDossierLegislatifdocumentsByUid(self, uid):
@@ -619,11 +723,11 @@ class AssembleeNationale:
     """getAmendementsByUid
 				return a all amendements of a document by its uid
 				@params uid : uid of dossier
-				@return : 
-					
+				@return :
+
 	"""
 
-    def getAmendementsByUid(self, uid, maxNumberOfAmendement = 1000):
+    def getAmendementsByUid(self, uid,  maxNumberOfAmendement=1000):
         tableDef = self.__amendementTableDefinition
 
         connection = psycopg2.connect(
@@ -638,7 +742,7 @@ class AssembleeNationale:
         for key in tableDef["schema"].keys():
             query += key + ","
         query = query[:-1]
-        query += " FROM AMENDEMENT WHERE texteLegislatifRef=%s;"# ORDER BY dateDepot DESC;"
+        query += " FROM AMENDEMENT WHERE texteLegislatifRef=%s;"  # ORDER BY dateDepot DESC;"
         try:
             cursor.execute(query, (uid,))
             for entry in cursor.fetchall():
@@ -653,15 +757,15 @@ class AssembleeNationale:
                 ret["amendements"].append(entryData)
         except:
             pass
-        ret["numberOfAmendement"]= len(ret["amendements"])
+        ret["numberOfAmendement"] = len(ret["amendements"])
         ret["amendements"] = ret["amendements"][:maxNumberOfAmendement]
         return ret
 
     """__extractLastDateDossierParlementaire
 				extract last updated date of a dossier parlementaire
 				@params dossier : json of dossier
-				@return : 
-					
+				@return :
+
 	"""
 
     def __extractLastDateDossierParlementaire(self, dossier):
@@ -700,5 +804,3 @@ class AssembleeNationale:
             print(dossier)
 
         return {"value": lastDateString, "lastDateString": lastDateString, "lastDateDatetime": lastDateDatetime}
-
-

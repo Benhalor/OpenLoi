@@ -32,6 +32,18 @@ class DocumentLegislatif extends React.Component {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
 
+    sanitizeWords(string) {
+        return string.normalize("NFD").replace(/\p{Diacritic}/gu, "")
+    }
+
+    generateSearchWords(spacedSeparatedWords) {
+        var listOfWords = spacedSeparatedWords.split(" ")
+        for (var i = 0; i < listOfWords.length; i++) {
+            listOfWords[i] = "\\b(?=\\w*" + listOfWords[i] + ")\\w+\\b"
+        }
+        return listOfWords
+    }
+
     render() {
 
         return (
@@ -41,15 +53,16 @@ class DocumentLegislatif extends React.Component {
                         <div className="col" onClick={this.changeDisplayAmendements.bind(this)}>
                             <div className="row entete" >
                                 <div className="col">
-                                    {this.state.displayAmendements ? "➖" : "➕"} {convertDate(this.props.data.dateDepot)} 
-                                    <span className="dossierStatus">{(this.state.amendements != null && this.state.amendements.numberOfAmendement!=0) ? "▪ " + this.state.amendements.numberOfAmendement+ " amendements":""} </span>
+                                    {this.state.displayAmendements ? "➖" : "➕"} {convertDate(this.props.data.dateDepot)}
+                                    <span className="dossierStatus">{(this.state.amendements != null && this.state.amendements.numberOfAmendement != 0) ? "▪ " + this.state.amendements.numberOfAmendement + " amendements" : ""} </span>
                                 </div>
                             </div>
                             <div className="row" >
                                 <Highlighter
-                                    searchWords={this.props.query.split(' ')}
-                                    autoEscape={true}
+                                    searchWords={this.props.query == "" ? [] : this.generateSearchWords(this.props.query)}
+                                    sanitize={this.sanitizeWords}
                                     textToHighlight={this.firstLetterUppercase(this.props.data.titrePrincipal)} />
+
 
                             </div>
 
@@ -59,9 +72,9 @@ class DocumentLegislatif extends React.Component {
                         <div className="col">
 
                             {this.state.displayAmendements && this.state.amendements.amendements.map((data) => <Amendement key={data.uid} data={data} query={this.props.query} />)}
-                            {(this.state.displayAmendements && this.state.amendements.amendements.length < this.state.amendements.numberOfAmendement) 
-                            &&  <div className="voirPlus">Voir {this.state.amendements.numberOfAmendement - this.state.amendements.amendements.length} amendements de plus...</div>
-                            
+                            {(this.state.displayAmendements && this.state.amendements.amendements.length < this.state.amendements.numberOfAmendement)
+                                && <div className="voirPlus">Voir {this.state.amendements.numberOfAmendement - this.state.amendements.amendements.length} amendements de plus...</div>
+
                             }
                         </div>
                     </div>
@@ -70,7 +83,7 @@ class DocumentLegislatif extends React.Component {
                 </div>
             </div>
         );
-    
+
 
 
     }
@@ -79,24 +92,5 @@ class DocumentLegislatif extends React.Component {
 export default DocumentLegislatif
 
 
-//
 
-/*<div className="col">
-                        <button className="btn">
-                            Lien
-                        </button>
-                        <div className="uid">
-                            {this.props.data.uid}
-                        </div>
-                    </div>
-                    
-                    
-                    
-                    
-                    
-                    {this.props.data.datePublication === null
-                                ? "Non publié"
-                                : "Publication: " + this.convertDate(this.props.data.datePublication)}
-                                
-                                
-                                */
+//{this.firstLetterUppercase(this.props.data.titrePrincipal)} 
