@@ -13,7 +13,7 @@ class App extends React.Component {
 
   pullResults = (data) => {
     console.log(data)
-    this.setState({queryResult:data})
+    this.setState({ queryResult: data })
   }
 
   render() {
@@ -26,7 +26,6 @@ class App extends React.Component {
               <img alt="Surveiller et trouver des textes de loi avec Open loi" src={logo} />
             </a>
 
-
             <div className="col">
               <div className="row justify-content-end">
                 <div className="col-auto">
@@ -37,6 +36,7 @@ class App extends React.Component {
                 </div>
               </div>
             </div>
+            
 
           </div>
         </div>

@@ -5,6 +5,13 @@ import convertDate from './utils'
 class Amendement extends React.Component {
     constructor(props) {
         super(props);
+        this.state = { displayAmendement: false };
+        console.log(this.props.data)
+    }
+
+    changeDisplayAmendement() {
+        this.setState({ displayAmendement: !this.state.displayAmendement })
+
     }
 
     firstLetterUppercase(string) {
@@ -41,32 +48,30 @@ class Amendement extends React.Component {
             <div className="subResultBloc">
                 <div className="row" >
                     <div className="col text-column-sub">
-                        <div className="row ">
+                        <div className="row " onClick={this.changeDisplayAmendement.bind(this)}>
                             <div className="col enteteAmendement">
-                                📝 Amendement déposé le {convertDate(this.props.data.dateDepot)} <span className="dossierStatus"> ▪ {this.extractStatus()}</span>
+                                📝 {this.props.data.article} {this.props.data.alinea}  - déposé le {convertDate(this.props.data.dateDepot)} <span className="dossierStatus"> ▪ {this.extractStatus()}</span>
                             </div>
                             <div className="col left-align">
                                 <a className="btnAmendement" target="_blank" rel="noopener noreferrer" href={"https://www.assemblee-nationale.fr/dyn/15/dossiers/alt/" + this.props.data.documentURI}>Voir ↗</a>
                             </div>
 
                         </div>
-                        <div className="row" >
-
-                            <div dangerouslySetInnerHTML={{ __html: this.props.data.exposeSommaire }} />
-
-
-                        </div>
-                        <div className="row deputeNames" >
-                            <div dangerouslySetInnerHTML={{ __html: this.props.data.signataires }} />
-                        </div>
-                        <div className="row uid" >
-                            {this.props.data.uid}
-                        </div>
-
-
+                        {this.state.displayAmendement &&
+                            <div className="col">
+                                <div className="row textAmendement" >
+                                    <div dangerouslySetInnerHTML={{ __html: this.props.data.exposeSommaire }} />
+                                </div>
+                                <div className="row deputeNames" >
+                                    <div dangerouslySetInnerHTML={{ __html: this.props.data.signataires }} />
+                                </div>
+                                <div className="row uid " >
+                                    {this.props.data.uid}
+                                </div>
+                            </div>
+                        }
 
                     </div>
-
 
                 </div>
             </div >

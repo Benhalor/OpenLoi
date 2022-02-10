@@ -38,7 +38,9 @@
 
 .row{
     display: flex;
+    flex-wrap: wrap;
     flex-shrink: 0;
+    flex-basis: auto;
     /*padding-right: calc(var(--bs-gutter-x) / 2);
     padding-left: calc(var(--bs-gutter-x) / 2);
     margin-top: var(--bs-gutter-y);*/
@@ -271,3 +273,18 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
     color: rgb(108, 117, 125);
     font-size: 1rem;
 }
+.textAmendement{
+    font-size:1.2rem;
+}
+
+@media (width <600px) {
+    html {
+        font-size: 60%;
+    }
+  }
+
+  @media (width <800px) {
+    html {
+        font-size: 80%;
+    }
+  }

@@ -80,7 +80,9 @@ class AssembleeNationale:
                 "etat": {"path": "amendement:cycleDeVie:etatDesTraitements:etat:libelle", "htmlEscape": True, "type": "VARCHAR ( 100 )", "search": True},
                 "sousEtat": {"path": "amendement:cycleDeVie:etatDesTraitements:sousEtat:libelle", "htmlEscape": True, "type": "VARCHAR ( 100 )", "search": True},
                 "dateSort": {"path": "amendement:cycleDeVie:dateSort", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
-                "sort": {"path": "amendement:cycleDeVie:sort", "htmlEscape": True, "type": "VARCHAR ( 100 )", "search": True},
+                "sort": {"path": "amendement:cycleDeVie:sort", "htmlEscape": True, "type": "VARCHAR ( 100 )", "search": False},
+                "article": {"path": "amendement:pointeurFragmentTexte:division:articleDesignationCourte", "htmlEscape": True, "type": "VARCHAR ( 100 )", "search": False},
+                "alinea": {"path": "amendement:pointeurFragmentTexte:amendementStandard:alinea:alineaDesignation", "htmlEscape": True, "type": "VARCHAR ( 100 )", "search": False},
             }
         }
 
@@ -504,7 +506,7 @@ class AssembleeNationale:
                         entryData[listOfColumn[i]] = str(entry[i])
                     else:
                         entryData[listOfColumn[i]] = entry[i]
-                if entryData["dossierRef"] not in wordAnywhereListOfDossiersLegislatifs:
+                if entryData["dossierRef"] not in wordAnywhereListOfDossiersLegislatifs + wordAdjacentListOfDossiersLegislatifs:
                     wordAnywhereListOfDossiersLegislatifs.append(
                         entryData["dossierRef"])
         except:
@@ -526,7 +528,7 @@ class AssembleeNationale:
                         entryData[listOfColumn[i]] = str(entry[i])
                     else:
                         entryData[listOfColumn[i]] = entry[i]
-                if entryData["dossierRef"] not in wordORListOfDossiersLegislatifs:
+                if entryData["dossierRef"] not in wordORListOfDossiersLegislatifs + wordAnywhereListOfDossiersLegislatifs + wordAdjacentListOfDossiersLegislatifs:
                     wordORListOfDossiersLegislatifs.append(
                         entryData["dossierRef"])
         except:
@@ -742,7 +744,7 @@ class AssembleeNationale:
         for key in tableDef["schema"].keys():
             query += key + ","
         query = query[:-1]
-        query += " FROM AMENDEMENT WHERE texteLegislatifRef=%s;"  # ORDER BY dateDepot DESC;"
+        query += " FROM AMENDEMENT WHERE texteLegislatifRef=%sORDER BY dateDepot DESC;"
         try:
             cursor.execute(query, (uid,))
             for entry in cursor.fetchall():

@@ -48,35 +48,33 @@ class DocumentLegislatif extends React.Component {
 
         return (
             <div className="subResultBloc">
-                <div className="row">
-                    <div className="col text-column-sub">
-                        <div className="col" onClick={this.changeDisplayAmendements.bind(this)}>
-                            <div className="row entete" >
-                                <div className="col">
-                                    {this.state.displayAmendements ? "➖" : "➕"} {convertDate(this.props.data.dateDepot)}
-                                    <span className="dossierStatus">{(this.state.amendements != null && this.state.amendements.numberOfAmendement != 0) ? "▪ " + this.state.amendements.numberOfAmendement + " amendements" : ""} </span>
-                                </div>
+                <div className="col text-column-sub">
+                    <div className="col" onClick={this.changeDisplayAmendements.bind(this)}>
+                        <div className="row entete" >
+                            <div className="col">
+                                {this.state.displayAmendements ? "➖" : "➕"} {convertDate(this.props.data.dateDepot)}
+                                <span className="dossierStatus">{(this.state.amendements != null && this.state.amendements.numberOfAmendement != 0) ? "▪ " + this.state.amendements.numberOfAmendement + " amendements" : ""} </span>
                             </div>
-                            <div className="row" >
-                                <Highlighter
-                                    searchWords={this.props.query == "" ? [] : this.generateSearchWords(this.props.query)}
-                                    sanitize={this.sanitizeWords}
-                                    textToHighlight={this.firstLetterUppercase(this.props.data.titrePrincipal)} />
-
-
-                            </div>
-
+                        </div>
+                        <div className="row" >
+                            <Highlighter
+                                searchWords={this.props.query == "" ? [] : this.generateSearchWords(this.props.query)}
+                                sanitize={this.sanitizeWords}
+                                textToHighlight={this.firstLetterUppercase(this.props.data.titrePrincipal)} />
 
 
                         </div>
-                        <div className="col">
 
-                            {this.state.displayAmendements && this.state.amendements.amendements.map((data) => <Amendement key={data.uid} data={data} query={this.props.query} />)}
-                            {(this.state.displayAmendements && this.state.amendements.amendements.length < this.state.amendements.numberOfAmendement)
-                                && <div className="voirPlus">Voir {this.state.amendements.numberOfAmendement - this.state.amendements.amendements.length} amendements de plus...</div>
 
-                            }
-                        </div>
+
+                    </div>
+                    <div className="col">
+
+                        {this.state.displayAmendements && this.state.amendements.amendements.map((data) => <Amendement key={data.uid} data={data} query={this.props.query} />)}
+                        {(this.state.displayAmendements && this.state.amendements.amendements.length < this.state.amendements.numberOfAmendement)
+                            && <div className="voirPlus">Voir {this.state.amendements.numberOfAmendement - this.state.amendements.amendements.length} amendements de plus...</div>
+
+                        }
                     </div>
 
 
