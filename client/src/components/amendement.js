@@ -36,11 +36,13 @@ class Amendement extends React.Component {
             return "Tombé le " + convertDate(this.props.data.dateSort) + "🪂";
         } else if (this.props.data.sort == "Non soutenu") {
             return "Non soutenu le " + convertDate(this.props.data.dateSort) + "😑";
-        } else {
+        } else if (this.props.data.etat == "A discuter") {
+            return "A discuter 💬";
+        }else {
             return this.props.data.sort + "|" + this.props.data.etat + "| " + this.props.data.sousEtat
         }
     }
-
+    
     render() {
 
 
