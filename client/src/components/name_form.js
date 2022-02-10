@@ -38,7 +38,7 @@ class NameForm extends React.Component {
           Rechercher :
         </label>
         <div className="col autocomplete">
-          <input type="search" className="autocomplete-input" value={this.state.userQuery} autoComplete="off" onChange={this.handleChange} placeholder="Ex: crypto" />
+          <input type="search" className="autocomplete-input" value={this.state.userQuery} autoComplete="off" onChange={this.handleChange} placeholder="Ex: climat" />
         </div>
       </form>
     );

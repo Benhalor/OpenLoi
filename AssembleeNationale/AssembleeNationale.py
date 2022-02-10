@@ -1,9 +1,7 @@
 import os
-import sys
 import time
 import json
 import shutil
-import html
 import zipfile
 import traceback
 import datetime
@@ -27,7 +25,7 @@ class AssembleeNationale:
         self.__verbose = verbose
         self.__sourceList = sourceList = {
             "DOSSIERS_LEGISLATIFS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/dossiers_legislatifs/Dossiers_Legislatifs_XV.json.zip", "pollingFrequency": 1000000},
-            "AGENDA": {"link": "http://data.assemblee-nationale.fr/static/openData/repository/15/vp/seances/seances_publique_excel.csv", "pollingFrequency": 10},
+            "AGENDA": {"link": "http://data.assemblee-nationale.fr/static/openData/repository/15/vp/seances/seances_publique_excel.csv", "pollingFrequency": 1000000},
             "AMENDEMENTS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/amendements_legis/Amendements_XV.json.zip", "pollingFrequency": 1000000},
             "DEBATS_EN_SEANCE_PUBLIQUE": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/vp/syceronbrut/syseron.xml.zip", "pollingFrequency": 1000000},
             "VOTES": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/scrutins/Scrutins_XV.json.zip", "pollingFrequency": 1000000},
@@ -42,7 +40,7 @@ class AssembleeNationale:
             "tableName": "DOSSIERS_LEGISLATIFS_DOCUMENT",
             "source": "AN",
             "schema": {
-                "uid": {"path": "document:uid", "htmlEscape": False, "type": "VARCHAR ( 20 ) PRIMARY KEY", "search": True},
+                "uid": {"path": "document:uid", "htmlEscape": False, "type": "VARCHAR ( 40 ) PRIMARY KEY", "search": True},
                 "dateCreation": {"path": "document:cycleDeVie:chrono:dateCreation", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
                 "dateDepot": {"path": "document:cycleDeVie:chrono:dateDepot", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
                 "datePublication": {"path": "document:cycleDeVie:chrono:datePublication", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
@@ -59,19 +57,37 @@ class AssembleeNationale:
             "tableName": "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE",
             "source": "AN",
             "schema": {
-                "uid": {"path": "dossierParlementaire:uid", "htmlEscape": False, "type": "VARCHAR ( 20 ) PRIMARY KEY", "search": True},
+                "uid": {"path": "dossierParlementaire:uid", "htmlEscape": False, "type": "VARCHAR ( 40 ) PRIMARY KEY", "search": True},
                 "titre": {"path": "dossierParlementaire:titreDossier:titre", "htmlEscape": True, "type": "VARCHAR ( 2000 )", "search": True},
                 "senatChemin": {"path": "dossierParlementaire:titreDossier:senatChemin", "htmlEscape": False, "type": "VARCHAR ( 2000 )", "search": False},
                 "anChemin": {"path": "dossierParlementaire:titreDossier:titreChemin", "htmlEscape": False, "type": "VARCHAR ( 2000 )", "search": False},
                 "actesLegislatifs": {"path": "dossierParlementaire:actesLegislatifs", "htmlEscape": True, "type": "VARCHAR ( 200000 )", "search": False},
-                "lastUpdate": {"path": "", "htmlEscape": True, "type": "TIMESTAMP WITH TIME ZONE", "search": False, "specialFunction": self.__extractLastDateDossierParlementaire},
+                "lastUpdate": {"path": "", "htmlEscape": True, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
 
             }
         }
 
+        self.__amendementTableDefinition = {
+            "tableName": "AMENDEMENT",
+            "source": "AN",
+            "schema": {
+                "uid": {"path": "amendement:uid", "htmlEscape": False, "type": "VARCHAR ( 40 )", "search": True},
+                "texteLegislatifRef": {"path": "amendement:texteLegislatifRef", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": True},
+                "signataires": {"path": "amendement:signataires:libelle", "htmlEscape": True, "type": "VARCHAR ( 20000 )", "search": True},
+                "exposeSommaire": {"path": "amendement:corps:contenuAuteur:exposeSommaire", "htmlEscape": True, "type": "VARCHAR ( 50000 )", "search": True},
+                "documentURI": {"path": "amendement:representations:representation:contenu:documentURI", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": True},
+                "dateDepot": {"path": "amendement:cycleDeVie:dateDepot", "htmlEscape": False, "type": "DATE", "search": False},
+                "etat": {"path": "amendement:cycleDeVie:etatDesTraitements:etat:libelle", "htmlEscape": True, "type": "VARCHAR ( 100 )", "search": True},
+                "sousEtat": {"path": "amendement:cycleDeVie:etatDesTraitements:sousEtat:libelle", "htmlEscape": True, "type": "VARCHAR ( 100 )", "search": True},
+                "dateSort": {"path": "amendement:cycleDeVie:dateSort", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
+                "sort": {"path": "amendement:cycleDeVie:sort", "htmlEscape": True, "type": "VARCHAR ( 100 )", "search": True},
+            }
+        }
+
         self.__tableList = {
-            "DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
-            "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE": self.__dossierLegislatifDossierParlementaireTableDefinition,
+            #"DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
+            #"DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE": self.__dossierLegislatifDossierParlementaireTableDefinition,
+            "AMENDEMENT": self.__amendementTableDefinition,
         }
 
         self.__database = 'assembleenationale'
@@ -282,14 +298,19 @@ class AssembleeNationale:
                 directoryToExtract+"/json/document", table="DOSSIERS_LEGISLATIFS_DOCUMENT")
             self.__uploadToDb(
                 directoryToExtract+"/json/dossierParlementaire", table="DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE")
-            print("json OK:"+str(self.__jsonReadOK))
-            print("json NOK:"+str(self.__jsonReadNOK))
-            print("json count:"+str(self.__count))
-            pass
+            print("json DOSSIERS_LEGISLATIFS OK:"+str(self.__jsonReadOK))
+            print("json DOSSIERS_LEGISLATIFS NOK:"+str(self.__jsonReadNOK))
         elif sourceName == "AGENDA":
             pass
         elif sourceName == "AMENDEMENTS":
-            pass
+            lastTime = time.time()
+            self.__jsonReadOK = 0
+            self.__jsonReadNOK = 0
+            self.__uploadToDb(
+                directoryToExtract+"/json", table="AMENDEMENT")
+            print("json AMENDEMENTS OK:"+str(self.__jsonReadOK))
+            print("json AMENDEMENTS NOK:"+str(self.__jsonReadNOK))
+            print("Upload amendements in "+str(time.time()-lastTime))
         elif sourceName == "DEBATS_EN_SEANCE_PUBLIQUE":
             pass
         elif sourceName == "VOTES":
@@ -304,24 +325,6 @@ class AssembleeNationale:
         elif sourceName == "REUNIONS":
             pass
 
-    """__unicodeEscape
-				Recursively escape badly encoded unicode char for all files in a given directory
-				@params path : path of the directory
-				@return : 
-					
-	"""
-
-    def __unicodeEscape(self, directory):
-        for root, subdirs, files in os.walk(directory):
-            for fileName in files:
-                path = os.path.join(root, fileName)
-                with open(path, 'rb') as source_file:
-                    contents = source_file.read()
-                    with open(path, 'wb') as dest_file:
-                        dest_file.write(contents.decode(
-                            'unicode_escape').encode('utf-8'))
-                        self.__count += 1
-
     """__uploadToDb
 				Recursively explore the foler dossierLegislatif and upload to db
 				@params directory : path of the directory
@@ -331,32 +334,42 @@ class AssembleeNationale:
 	"""
 
     def __uploadToDb(self, directory, table="DOSSIERS_LEGISLATIFS_DOCUMENT"):
-        tableDefinition = self.__tableList[table]
-        connection = psycopg2.connect(
-            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
-        )
-        connection.autocommit = True
-        cursor = connection.cursor()
-
-        for root, subdirs, files in os.walk(directory):
-            for fileName in files:
-                path = os.path.join(root, fileName)
-                with open(path, 'r') as sourceFile:
-                    text = sourceFile.read()
-                    try:
-                        doc = json.loads(text)
+        if table in self.__tableList:
+            tableDefinition = self.__tableList[table]
+            connection = psycopg2.connect(
+                database=self.__database, user='postgres', password='password', host='localhost', port='5432'
+            )
+            #connection.autocommit = True
+            cursor = connection.cursor()
+            count = 0
+            lastTime = time.time()
+            for root, subdirs, files in os.walk(directory):
+                for fileName in files:
+                    count +=1
+                    if count%10000==0:
+                        print(str(count) +":  "+str(time.time()-lastTime))
+                        lastTime = time.time()
+                        print(fileName)
+                        connection.commit()
+                    path = os.path.join(root, fileName)
+                    with open(path, 'r') as sourceFile:
+                        text = sourceFile.read()
                         try:
-                            query = self.__buildQueryFromDef(
-                                doc, tableDefinition)
-                            cursor.execute(query)
-                            self.__jsonReadOK += 1
-                        except psycopg2.errors.UniqueViolation:
-                            pass
+                            doc = json.loads(text)
+                            try:
+                                query = self.__buildQueryFromDef(
+                                    doc, tableDefinition)
+                                cursor.execute(query)
+                                self.__jsonReadOK += 1
+                            except psycopg2.errors.UniqueViolation:
+                                pass
+                            except:
+                                print(path)
+                                traceback.print_exc()
                         except:
-                            print(path)
                             traceback.print_exc()
-                    except:
-                        self.__jsonReadNOK += 1
+                            self.__jsonReadNOK += 1
+            print(count)
 
     """__buildQueryFromDef
 				Build a query to insert an element from a dict defining the table
@@ -372,24 +385,40 @@ class AssembleeNationale:
         columnString = ""
         valuesString = ""
         for columnName, columnDef in tableDef["schema"].items():
-            try:
-                specialValue = columnDef["specialFunction"](doc)["value"]
+            if tableDef["tableName"] == "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE" and columnName == "lastUpdate":
+                lastUpdate = self.__extractLastDateDossierParlementaire(doc)["value"]
                 columnString += columnName+","
-                valuesString += "\'"+specialValue+"\',"
-            except KeyError:
+                valuesString += "\'"+lastUpdate+"\',"
+            else:
                 try:
                     docPath = doc
                     for pathIter in columnDef["path"].split(":"):
                         docPath = docPath[pathIter]
                     if docPath is not None:
-                        columnString += columnName+","
                         if type(docPath) == dict:
                             docPath = json.dumps(docPath)
-                        if columnDef["htmlEscape"]:
+                            
+                        if columnDef["type"] == "DATE":
+                            try:
+                                datetime.datetime.strptime(docPath, "%Y-%m-%d")
+                                valuesString += "\'"+docPath+"\',"
+                                columnString += columnName+","
+                            except ValueError:
+                                pass
+                        elif columnDef["type"] == "TIMESTAMP WITH TIME ZONE":
+                            try:
+                                datetime.datetime.strptime(docPath, "%Y-%m-%dT%H:%M:%S%z")
+                                valuesString += "\'"+docPath+"\',"
+                                columnString += columnName+","
+                            except ValueError:
+                                pass
+                        elif columnDef["htmlEscape"]:
                             valuesString += "\'" + \
                                 self.__htmlEscape(docPath)+"\',"
+                            columnString += columnName+","
                         else:
                             valuesString += "\'"+docPath+"\',"
+                            columnString += columnName+","
                 except KeyError:
                     pass
                 except:
@@ -426,7 +455,7 @@ class AssembleeNationale:
             totalCount = 0
         except:
             traceback.print_exc()
-        processedQuery = processedQuery.replace(" ", "<3>")
+        processedQuery = processedQuery.replace(" ", "<2>")
 
         # Then get the results
         tableDef = self.__dossierLegislatifDocumentTableDefinition
@@ -457,10 +486,9 @@ class AssembleeNationale:
         except:
             traceback.print_exc()
         ret["count"] = totalCount
-        ret["listOfDossiersLegislatifs"] = self.__sortDossierLegislatifsUid(ret["listOfDossiersLegislatifs"])
+        ret["listOfDossiersLegislatifs"] = self.__sortDossierLegislatifsUid(
+            ret["listOfDossiersLegislatifs"])
         return json.dumps(ret)
-
-
 
     """__sortDossierLegislatifsUid
 				return a dossier legislatif by its uid
@@ -490,17 +518,15 @@ class AssembleeNationale:
                 lastUpdate = entry[0]
             except:
                 traceback.print_exc()
-            uidAndDateList.append({"uid":uid, "date":lastUpdate})
-        
+            uidAndDateList.append({"uid": uid, "date": lastUpdate})
+
         # sort list on date
-        uidAndDateList.sort(key = lambda x:x['date'], reverse=True)
+        uidAndDateList.sort(key=lambda x: x['date'], reverse=True)
         ret = []
         for element in uidAndDateList:
             ret.append(element["uid"])
 
         return ret
-
-
 
     """__htmlEscape
 				Escape some char string
@@ -590,12 +616,54 @@ class AssembleeNationale:
             pass
         return ret
 
+    """getAmendementsByUid
+				return a all amendements of a document by its uid
+				@params uid : uid of dossier
+				@return : 
+					
+	"""
+
+    def getAmendementsByUid(self, uid, maxNumberOfAmendement = 1000):
+        tableDef = self.__amendementTableDefinition
+
+        connection = psycopg2.connect(
+            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
+        )
+        connection.autocommit = True
+        cursor = connection.cursor()
+
+        ret = {}
+        ret["amendements"] = []
+        query = "SELECT "
+        for key in tableDef["schema"].keys():
+            query += key + ","
+        query = query[:-1]
+        query += " FROM AMENDEMENT WHERE texteLegislatifRef=%s;"# ORDER BY dateDepot DESC;"
+        try:
+            cursor.execute(query, (uid,))
+            for entry in cursor.fetchall():
+                entryData = {}
+                listOfColumn = list(
+                    tableDef["schema"].keys())
+                for i in range(len(entry)):
+                    if type(entry[i]) == datetime.datetime:
+                        entryData[listOfColumn[i]] = str(entry[i])
+                    else:
+                        entryData[listOfColumn[i]] = entry[i]
+                ret["amendements"].append(entryData)
+        except:
+            pass
+        ret["numberOfAmendement"]= len(ret["amendements"])
+        ret["amendements"] = ret["amendements"][:maxNumberOfAmendement]
+        return ret
+
     """__extractLastDateDossierParlementaire
 				extract last updated date of a dossier parlementaire
 				@params dossier : json of dossier
 				@return : 
 					
 	"""
+
     def __extractLastDateDossierParlementaire(self, dossier):
         lastDateString = "1970-01-01T01:00:00.000+00:00"
         lastDateDatetime = datetime.datetime.strptime(
@@ -611,7 +679,8 @@ class AssembleeNationale:
                 elif isinstance(value, list):
                     for doc in value:
                         if isinstance(doc, dict):
-                            ret = self.__extractLastDateDossierParlementaire(doc)
+                            ret = self.__extractLastDateDossierParlementaire(
+                                doc)
                             tempLastDatetime = ret["lastDateDatetime"]
                             tempLastDateString = ret["lastDateString"]
                             if tempLastDatetime > lastDateDatetime:
@@ -631,3 +700,5 @@ class AssembleeNationale:
             print(dossier)
 
         return {"value": lastDateString, "lastDateString": lastDateString, "lastDateDatetime": lastDateDatetime}
+
+

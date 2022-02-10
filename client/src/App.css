@@ -235,3 +235,34 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
 .plusminus{
     font-size: 1rem;
 }
+
+.voirPlus{
+    background: rgb(255, 255, 255);
+    border:1px;
+    text-align: center;
+    padding-top : 1vh;
+    padding-bottom : 1vh;
+    border-top: 3px dashed rgb(222, 226, 230) !important;
+    cursor: pointer;
+}
+
+.voirPlus:hover {
+    color: rgb(108, 117, 125);
+  }
+
+.enteteAmendement{
+    font-size: 1.2rem;
+    line-height: 3rem;
+    font-weight: 450;
+    min-width: 50vw;
+}
+
+.btnAmendement{
+    background-color: rgb(85, 97, 217);
+    border-color: rgb(85, 97, 217);
+    color: rgb(255, 255, 255);
+    font-size: 1.2rem;
+    box-shadow: rgb(0 0 0 / 8%) 0px 0.3rem 0.25rem;
+    border-radius: 0.4rem;
+    padding: 0.5rem 0.5rem;
+}

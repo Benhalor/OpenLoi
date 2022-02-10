@@ -7,7 +7,7 @@ import convertDate from './utils'
 class DossierLegislatif extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { dossierLegislatif: null, documentsDossierLegislatif: null, displayEtapes: false , displayAmendements: false };
+        this.state = { dossierLegislatif: null, documentsDossierLegislatif: null, displayEtapes: false, displayAmendements: false };
         this.getDossierLegislatif(this.props.dossierUid)
         this.getDocumentsDossierLegislatif(this.props.dossierUid)
     }
@@ -31,7 +31,6 @@ class DossierLegislatif extends React.Component {
             .then(
                 (result) => {
                     this.setState({ dossierLegislatif: result })
-
                 }
 
             )
@@ -54,7 +53,16 @@ class DossierLegislatif extends React.Component {
         if (Array.isArray(lastEtape)) {
             lastEtape = lastEtape.slice(-1)[0]
         }
-        return lastEtape.libelleActe.nomCanonique
+        var assemblee = ""
+        if (lastEtape.codeActe.substring(0, 2) == "AN") {
+            assemblee = "AN"
+        } else if (lastEtape.codeActe.substring(0, 2) == "SN") {
+            assemblee = "Sénat"
+        } else {
+            assemblee = lastEtape.codeActe
+        }
+
+        return lastEtape.libelleActe.nomCanonique + " - " + assemblee
     }
 
 
@@ -70,7 +78,7 @@ class DossierLegislatif extends React.Component {
                         <div className="col text-column">
                             <div className="row">
 
-                                &#128193; Dossier Législatif<span className="dossierStatus">  ▪ {this.extractDossierStatus(this.state.dossierLegislatif.actesLegislatifs)}</span>
+                                &#128193; Dossier Législatif <span className="dossierStatus">  ▪ {this.extractDossierStatus(this.state.dossierLegislatif.actesLegislatifs)}</span>
 
 
                             </div>
@@ -81,7 +89,7 @@ class DossierLegislatif extends React.Component {
                                     textToHighlight={this.state.dossierLegislatif.titre} />
 
                             </div>
-                            <span className="dossierStatus">  ⏲ Derniers éléments le {convertDate(this.state.dossierLegislatif.lastUpdate)}</span>
+                            <span className="dossierStatus">  ⏲ Derniers éléments du {convertDate(this.state.dossierLegislatif.lastUpdate)}</span>
                         </div>
 
                         <div className="left-align">
@@ -103,13 +111,10 @@ class DossierLegislatif extends React.Component {
                     </div>
                     <div className="col">
                         <div className="titleSubResultBloc" onClick={this.changeDisplayEtapes.bind(this)}>
-                        {this.state.displayEtapes?"➖":"➕"} Élements du dossier 📖
+                            {this.state.displayEtapes ? "➖" : "➕"} Élements du dossier 📖
                         </div>
                         {this.state.displayEtapes && this.state.documentsDossierLegislatif.documents.map((data) => <DocumentLegislatif key={data.uid} data={data} query={this.props.query} />)}
-                        <div className="titleSubResultBloc" onClick={this.changeDisplayAmendements.bind(this)}>
-                        {this.state.displayAmendements?"➖":"➕"} Amendements 📝
-                        </div>
-                        {this.state.displayAmendements && this.state.documentsDossierLegislatif.documents.map((data) => <DocumentLegislatif key={data.uid} data={data} query={this.props.query} />)}
+                       
                     </div>
 
                 </div>);

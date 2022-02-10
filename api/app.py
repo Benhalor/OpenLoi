@@ -59,6 +59,16 @@ def getDossierLegislatif(uid):
         # 405 Method Forbidden
         abort(405)
 
+@app.route("/api/amendements/<string:uid>", methods=['GET'])
+def getAmendements(uid):
+    if request.method == 'GET':
+        ret = assembleeNationale.getAmendementsByUid(uid)
+        print(ret)
+        return ret
+
+    else:
+        # 405 Method Forbidden
+        abort(405)
 
 """
 

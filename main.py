@@ -14,6 +14,7 @@ assembleeNationale.processSources("AssembleeNationale/data/", r["updatedSources"
 print(assembleeNationale.search("test"))
 print(assembleeNationale.getDossierLegislatifByUid("PIONANR5L15B3619"))
 assembleeNationale.getDossierLegislatifdocumentsByUid("DLR5L15N37471")
+print(assembleeNationale.getAmendementsByUid("PNREANR5L15B0480"))
 
 """
 filev = open("/home/gabriel/OpenLoi/AssembleeNationale/data/DOSSIERS_LEGISLATIFS/Dossiers_Legislatifs_XV/json/dossierParlementaire/DLR5L15N36287.json")
