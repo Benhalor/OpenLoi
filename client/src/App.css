@@ -276,6 +276,15 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
 .textAmendement{
     font-size:1.2rem;
 }
+.textDispositifAmendement{
+    font-size:1rem;
+    font-weight: 450;
+    color: rgb(108, 117, 125);
+}
+
+
+
+
 
 @media (width <600px) {
     html {

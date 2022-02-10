@@ -74,6 +74,7 @@ class AssembleeNationale:
                 "uid": {"path": "amendement:uid", "htmlEscape": False, "type": "VARCHAR ( 40 )", "search": True},
                 "texteLegislatifRef": {"path": "amendement:texteLegislatifRef", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": True},
                 "signataires": {"path": "amendement:signataires:libelle", "htmlEscape": True, "type": "VARCHAR ( 20000 )", "search": True},
+                "dispositif": {"path": "amendement:corps:contenuAuteur:dispositif", "htmlEscape": True, "type": "VARCHAR ( 1000000 )", "search": True},
                 "exposeSommaire": {"path": "amendement:corps:contenuAuteur:exposeSommaire", "htmlEscape": True, "type": "VARCHAR ( 50000 )", "search": True},
                 "documentURI": {"path": "amendement:representations:representation:contenu:documentURI", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": True},
                 "dateDepot": {"path": "amendement:cycleDeVie:dateDepot", "htmlEscape": False, "type": "DATE", "search": False},
@@ -341,7 +342,7 @@ class AssembleeNationale:
             connection = psycopg2.connect(
                 database=self.__database, user='postgres', password='password', host='localhost', port='5432'
             )
-            # connection.autocommit = True
+            #connection.autocommit = True
             cursor = connection.cursor()
             count = 0
             lastTime = time.time()

@@ -59,6 +59,9 @@ class Amendement extends React.Component {
                         </div>
                         {this.state.displayAmendement &&
                             <div className="col">
+                                <div className="row textDispositifAmendement" >
+                                    <div dangerouslySetInnerHTML={{ __html: this.props.data.dispositif }} />
+                                </div>
                                 <div className="row textAmendement" >
                                     <div dangerouslySetInnerHTML={{ __html: this.props.data.exposeSommaire }} />
                                 </div>
