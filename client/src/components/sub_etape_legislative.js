@@ -6,11 +6,26 @@ import convertDate from './utils'
 class SubEtapeLegislative extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { displaySubEtapeLegislative: false, subEtapeLegislative: null };
-        console.log("dfdsfsdsdfsdfsdfdsfsdfsfds")
+        this.state = { texteAssocie: null };
+        this.getAssociatedDocument()
+        console.log(this.state.data)
     }
 
-    
+    getAssociatedDocument() {
+        console.log(this.props.data)
+        if (this.props.data.texteAssocie !== undefined) {
+            fetch('http://localhost:5000/api/documentById/' + this.props.data.texteAssocie)
+                .then(response => response.json())
+                .then(
+                    (result) => {
+                        this.setState({ texteAssocie: result })
+                    }
+
+                )
+            
+        }
+
+    }
 
     changedisplaySubEtapeLegislative() {
         this.setState({ displaySubEtapeLegislative: !this.state.displaySubEtapeLegislative })
@@ -26,15 +41,19 @@ class SubEtapeLegislative extends React.Component {
                     <div className="col" onClick={this.changedisplaySubEtapeLegislative.bind(this)}>
                         <div className="row entete" >
                             <div className="col">
-                                {this.state.displaySubEtapeLegislative ? "➖" : "➕"} {this.props.data.libelleActe.nomCanonique}
+                                ▪ {this.props.data.libelleActe.nomCanonique} <span className="dossierStatus">  ▪ {convertDate(this.props.data.dateActe)}</span>
                             </div>
                         </div>
-                       
+
+                        <div className="col">
+                        {this.state.texteAssocie !== null && this.state.texteAssocie.titrePrincipal}
+
+                        </div>
 
 
 
                     </div>
-                    
+
 
                 </div>
             </div>

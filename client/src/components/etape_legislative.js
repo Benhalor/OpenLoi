@@ -19,7 +19,6 @@ class EtapeLegislative extends React.Component {
         } else {
             this.setState({ subEtapesLegislatives: [jsonParse] })
         }
-        console.log(this.state.subEtapesLegislatives)
     }
 
 

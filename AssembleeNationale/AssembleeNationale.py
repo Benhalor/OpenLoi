@@ -639,6 +639,43 @@ class AssembleeNationale:
             traceback.print_exc()
         return ret
 
+
+
+    """getDocumentByUid
+				return a dossier legislatif by its uid
+				@params uid : uid of dossier
+				@return :
+
+	"""
+
+    def getDocumentByUid(self, uid):
+        tableDef = self.__dossierLegislatifDocumentTableDefinition
+
+        connection = psycopg2.connect(
+            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
+        )
+        connection.autocommit = True
+        cursor = connection.cursor()
+
+        ret = {}
+        query = "SELECT "
+        for key in tableDef["schema"].keys():
+            query += key + ","
+        query = query[:-1]
+        query += " FROM DOSSIERS_LEGISLATIFS_DOCUMENT WHERE uid=%s;"
+
+        try:
+            cursor.execute(query, (uid,))
+            entry = cursor.fetchone()
+            listOfColumn = list(
+                tableDef["schema"].keys())
+            for i in range(len(entry)):
+                ret[listOfColumn[i]] = entry[i]
+        except:
+            traceback.print_exc()
+        return ret
+
+
     """getDossierLegislatifByUid
 				return a dossier legislatif by its uid
 				@params uid : uid of dossier
