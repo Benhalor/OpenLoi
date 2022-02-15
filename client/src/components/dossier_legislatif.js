@@ -2,14 +2,15 @@ import React, { Component } from 'react';
 import Highlighter from "react-highlight-words";
 import "./result.css";
 import DocumentLegislatif from './document_legislatif';
+import EtapeLegislative from './etape_legislative';
+
 import convertDate from './utils'
 
 class DossierLegislatif extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { dossierLegislatif: null, documentsDossierLegislatif: null, displayEtapes: false, displayAmendements: false };
+        this.state = { dossierLegislatif: null, etapesLegislatives: null, displayEtapes: false, displayAmendements: false };
         this.getDossierLegislatif(this.props.dossierUid)
-        this.getDocumentsDossierLegislatif(this.props.dossierUid)
     }
 
     changeDisplayEtapes() {
@@ -31,22 +32,23 @@ class DossierLegislatif extends React.Component {
             .then(
                 (result) => {
                     this.setState({ dossierLegislatif: result })
+                    this.getEtapesLegislatives(result.actesLegislatifs)
                 }
 
             )
     }
 
-    getDocumentsDossierLegislatif(uid) {
-        fetch('http://localhost:5000/api/documentsDossierLegislatif/' + uid)
-            .then(response => response.json())
-            .then(
-                (result) => {
-                    this.setState({ documentsDossierLegislatif: result })
+    getEtapesLegislatives(arrayOfEtapes) {
 
-                }
-
-            )
+        var jsonParse = JSON.parse(arrayOfEtapes).acteLegislatif
+        if (Array.isArray(jsonParse)) {
+            this.setState({ etapesLegislatives: jsonParse })
+        } else {
+            this.setState({ etapesLegislatives: [jsonParse] })
+        }
     }
+
+
 
     extractDossierStatus(arrayOfEtapes) {
         var lastEtape = JSON.parse(arrayOfEtapes).acteLegislatif
@@ -80,7 +82,7 @@ class DossierLegislatif extends React.Component {
 
     render() {
 
-        if (this.state.dossierLegislatif !== null && this.state.documentsDossierLegislatif !== null) {
+        if (this.state.dossierLegislatif !== null && this.state.etapesLegislatives !== null) {
             return (
                 <div className="resultBloc">
 
@@ -125,7 +127,7 @@ class DossierLegislatif extends React.Component {
                         <div className="titleSubResultBloc" onClick={this.changeDisplayEtapes.bind(this)}>
                             {this.state.displayEtapes ? "➖" : "➕"} Élements du dossier 📖
                         </div>
-                        {this.state.displayEtapes && this.state.documentsDossierLegislatif.documents.map((data) => <DocumentLegislatif key={data.uid} data={data} query={this.props.query} />)}
+                        {this.state.displayEtapes && this.state.etapesLegislatives.map((data) => <EtapeLegislative key={data.uid} data={data} query={this.props.query} />)}
 
                     </div>
 

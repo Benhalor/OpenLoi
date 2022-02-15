@@ -12,7 +12,6 @@ class App extends React.Component {
   }
 
   pullResults = (data) => {
-    console.log(data)
     this.setState({ queryResult: data })
   }
 

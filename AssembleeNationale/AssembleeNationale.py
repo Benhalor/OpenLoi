@@ -566,31 +566,21 @@ class AssembleeNationale:
 
         # Get the results
         tableDef = self.__dossierLegislatifDossierParlementaireTableDefinition
-        query = "SELECT "
-        for key in tableDef["schema"].keys():
-            query += key + ","
-        query = query[:-1]
-        query += " FROM DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE ORDER BY lastUpdate DESC;"
+        
 
         count = 0
 
-        # First try by the words adjacent
+        # Get the list of documents legislatifs refs
+        ret["listOfDossiersLegislatifs"] = []
+        query = "SELECT DISTINCT(DOSSIERS_LEGISLATIFS_DOCUMENT.dossierRef) dateDepot FROM AMENDEMENT \
+            JOIN DOSSIERS_LEGISLATIFS_DOCUMENT ON AMENDEMENT.texteLegislatifRef=DOSSIERS_LEGISLATIFS_DOCUMENT.uid\
+            ORDER BY dateDepot DESC LIMIT %s;"
         ret["listOfDossiersLegislatifs"] = []
         try:
-            cursor.execute(query)
-            print(query)
-
+            cursor.execute(query,(maxNumberOfResults,))
             for entry in cursor.fetchall():
-                count += 1
-                entryData = {}
-                listOfColumn = list(
-                    tableDef["schema"].keys())
-                for i in range(len(entry)):
-                    if type(entry[i]) == datetime.datetime:
-                        entryData[listOfColumn[i]] = str(entry[i])
-                    else:
-                        entryData[listOfColumn[i]] = entry[i]
-                ret["listOfDossiersLegislatifs"].append(entryData["uid"])
+                count+=1
+                ret["listOfDossiersLegislatifs"].append(entry[0])
         except:
             traceback.print_exc()
 
