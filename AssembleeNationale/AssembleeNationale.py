@@ -798,8 +798,11 @@ class AssembleeNationale:
 
 	"""
 
-    def getAmendementsQuery(self, uid, query, maxNumberOfAmendement=10):
+    def getAmendementsQuery(self, uidTexteLegislatifRef, term, maxNumberOfAmendement=10):
         tableDef = self.__amendementTableDefinition
+
+        texteLegislatifRef = uidTexteLegislatifRef.replace("'", "\\'").replace("--", "")
+        processedQuery = term.replace("'", "\\'").replace("--", "")
 
         connection = psycopg2.connect(
             database=self.__database, user='postgres', password='password', host='localhost', port='5432'
@@ -809,13 +812,30 @@ class AssembleeNationale:
 
         ret = {}
         ret["amendements"] = []
+        ret["count"] = 0
+
+        # First get the radicals (use for highlight in react)
+        try:
+            cursor.execute("SELECT to_tsvector('french', %s);",
+                           (processedQuery,))
+            ret["query"] = " ".join(cursor.fetchone()[0].split("'")[1::2])
+        except:
+            traceback.print_exc()
+
+        # Then get the results
         query = "SELECT "
         for key in tableDef["schema"].keys():
             query += key + ","
         query = query[:-1]
-        query += " FROM AMENDEMENT WHERE texteLegislatifRef=%sORDER BY dateDepot DESC;"
+        query += " FROM AMENDEMENT WHERE ts @@ to_tsquery('french',%s) AND texteLegislatifRef=%s;"
+
+        count = 0
+
+        # First try by the words adjacent
+        processedQueryLogic = processedQuery.replace(" ", "<1>")
         try:
-            cursor.execute(query, (uid,))
+            cursor.execute(query, (processedQueryLogic,texteLegislatifRef,))
+
             for entry in cursor.fetchall():
                 entryData = {}
                 listOfColumn = list(
@@ -825,9 +845,50 @@ class AssembleeNationale:
                         entryData[listOfColumn[i]] = str(entry[i])
                     else:
                         entryData[listOfColumn[i]] = entry[i]
-                ret["amendements"].append(entryData)
+                if entryData not in ret["amendements"]:
+                    ret["amendements"].append(entryData)
         except:
-            pass
+            traceback.print_exc()
+        
+        # Then try by the words anywhere
+        processedQueryLogic = processedQuery.replace(" ", "&")
+        try:
+            cursor.execute(query, (processedQueryLogic,texteLegislatifRef,))
+
+            for entry in cursor.fetchall():
+                entryData = {}
+                listOfColumn = list(
+                    tableDef["schema"].keys())
+                for i in range(len(entry)):
+                    if type(entry[i]) == datetime.datetime:
+                        entryData[listOfColumn[i]] = str(entry[i])
+                    else:
+                        entryData[listOfColumn[i]] = entry[i]
+                if entryData not in ret["amendements"]:
+                    ret["amendements"].append(entryData)
+        except:
+            traceback.print_exc()
+        
+        # Then try by any word
+        processedQueryLogic = processedQuery.replace(" ", "|")
+        try:
+            cursor.execute(query, (processedQueryLogic,texteLegislatifRef,))
+
+            for entry in cursor.fetchall():
+                entryData = {}
+                listOfColumn = list(
+                    tableDef["schema"].keys())
+                for i in range(len(entry)):
+                    if type(entry[i]) == datetime.datetime:
+                        entryData[listOfColumn[i]] = str(entry[i])
+                    else:
+                        entryData[listOfColumn[i]] = entry[i]
+                if entryData not in ret["amendements"]:
+                    ret["amendements"].append(entryData)
+        except:
+            traceback.print_exc()
+        
+
         ret["numberOfAmendement"] = len(ret["amendements"])
         ret["amendements"] = ret["amendements"][:maxNumberOfAmendement]
         return ret

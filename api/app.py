@@ -92,7 +92,7 @@ def getAmendements(uid):
         # 405 Method Forbidden
         abort(405)
 
-@app.route("/api/amendementsQuery/<string:uid>&<string:query>", methods=['GET'])
+@app.route("/api/amendementsQuery/<string:query>&<string:uid>", methods=['GET'])
 def getAmendementsQuery(uid, query):
     if request.method == 'GET':
         ret = assembleeNationale.getAmendementsQuery(uid, query)

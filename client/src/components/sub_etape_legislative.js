@@ -7,7 +7,7 @@ import NameForm from './name_form';
 class SubEtapeLegislative extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { texteAssocie: null, amendements: null, dateActe: null, userQuery: '' };
+        this.state = { texteAssocie: null, amendements: null, dateActe: null, userQuery: ""};
         this.getAssociatedDocument()
         //console.log(this.state.data)
     }
@@ -87,15 +87,19 @@ class SubEtapeLegislative extends React.Component {
     }
 
     updateAmendementsQuery(event) {
-        fetch('http://localhost:5000/api/amendements/' + this.state.texteAssocie.uid)
-            .then(response => response.json())
-            .then(
-                (result) => {
-                    this.setState({ amendements: result })
+        if (this.state.userQuery != "") {
+            fetch('http://localhost:5000/api/amendementsQuery/' + this.state.userQuery + "&" + this.state.texteAssocie.uid)
+                .then(response => response.json())
+                .then(
+                    (result) => {
+                        this.setState({ amendements: result })
 
-                }
+                    }
 
-            )
+                )
+        } else {
+            this.getAmendements(this.state.texteAssocie.uid)
+        }
         event.preventDefault();
     }
 
@@ -157,30 +161,28 @@ class SubEtapeLegislative extends React.Component {
                             }
 
                             {/*Button for show/hide amendements*/}
-                            {(this.state.amendements != null && this.state.amendements.numberOfAmendement != 0)
-                                && <div className="cursor voirAmendements" onClick={this.changedisplayAmendements.bind(this)}>
-                                    {this.state.displayAmendements ? "Cacher " : "Voir "} {this.state.amendements.numberOfAmendement} amendements {this.state.displayAmendements ? "⬇ " : "⬆ "}
-                                </div>
+                            <div className={(this.state.amendements != null && this.state.amendements.numberOfAmendement != 0) ? "row voirAmendements " : ""} >
+                                {(this.state.amendements != null && this.state.amendements.numberOfAmendement != 0)
+                                    && <div className="cursor showAmendements" onClick={this.changedisplayAmendements.bind(this)}>
+                                        {this.state.displayAmendements ? "Voir " : "Voir "} {this.state.amendements.numberOfAmendement} amendements {this.state.displayAmendements ? "⬇ " : "⬆ "}
+                                    </div>
 
-                            }
+                                }
 
-                            {/*Search form in amendements*/}
-                            {(this.state.amendements != null && this.state.amendements.numberOfAmendement != 0 && this.state.displayAmendements)
-                                && <div className="searchAmendements" >
+                                {/*Search form in amendements*/}
+                                {(this.state.amendements != null && this.state.amendements.numberOfAmendement != 0 && this.state.displayAmendements)
+                                    &&
                                     <form onSubmit={this.updateAmendementsQuery.bind(this)} className="row align-items-center">
-                                        <label className="col-md-auto label-for-search-amendements">
-                                            Rechercher :
-                                        </label>
-                                        <div className="col">
-                                            <input className="search-amendements-input" value={this.state.userQuery} autoComplete="off" onChange={this.handleChange.bind(this)} placeholder="Ex: climat" />
-                                        </div>
-                                    </form>
-                                </div>
 
-                            }
+                                        <input className="search-amendements-input" value={this.state.userQuery} autoComplete="off" onChange={this.handleChange.bind(this)} placeholder="🔎 Rechercher" />
+                                    </form>
+
+
+                                }
+                            </div>
 
                             {/* Display Amendements*/}
-                            {(this.state.amendements !== null && this.state.displayAmendements) && this.state.amendements.amendements.map((data) => <Amendement key={data.uid} data={data} query={this.props.query} />)}
+                            {(this.state.amendements !== null && this.state.displayAmendements) && this.state.amendements.amendements.map((data) => <Amendement key={data.uid + this.state.userQuery} data={data} query={this.state.userQuery} />)}
                             {(this.state.displayAmendements && this.state.amendements.amendements.length < this.state.amendements.numberOfAmendement)
                                 && <div className="voirPlus">Voir {this.state.amendements.numberOfAmendement - this.state.amendements.amendements.length} amendements de plus...</div>
 

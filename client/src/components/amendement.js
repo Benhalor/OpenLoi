@@ -6,7 +6,7 @@ class Amendement extends React.Component {
     constructor(props) {
         super(props);
         this.state = { displayAmendement: false };
-        //console.log(this.props.data)
+        console.log(this.props.data.dispositif)
     }
 
     changeDisplayAmendement() {
@@ -67,9 +67,7 @@ class Amendement extends React.Component {
                                 <div className="row deputeNames" >
                                     <div dangerouslySetInnerHTML={{ __html: this.props.data.signataires }} />
                                 </div>
-                                <div className="row uid " >
-                                    {this.props.data.uid}
-                                </div>
+                               
                             </div>
                         }
 
