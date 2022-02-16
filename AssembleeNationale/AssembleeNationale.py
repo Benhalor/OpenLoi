@@ -757,7 +757,48 @@ class AssembleeNationale:
 
 	"""
 
-    def getAmendementsByUid(self, uid,  maxNumberOfAmendement=1000):
+    def getAmendementsByUid(self, uid,  maxNumberOfAmendement=10):
+        tableDef = self.__amendementTableDefinition
+
+        connection = psycopg2.connect(
+            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
+        )
+        connection.autocommit = True
+        cursor = connection.cursor()
+
+        ret = {}
+        ret["amendements"] = []
+        query = "SELECT "
+        for key in tableDef["schema"].keys():
+            query += key + ","
+        query = query[:-1]
+        query += " FROM AMENDEMENT WHERE texteLegislatifRef=%sORDER BY dateDepot DESC;"
+        try:
+            cursor.execute(query, (uid,))
+            for entry in cursor.fetchall():
+                entryData = {}
+                listOfColumn = list(
+                    tableDef["schema"].keys())
+                for i in range(len(entry)):
+                    if type(entry[i]) == datetime.datetime:
+                        entryData[listOfColumn[i]] = str(entry[i])
+                    else:
+                        entryData[listOfColumn[i]] = entry[i]
+                ret["amendements"].append(entryData)
+        except:
+            pass
+        ret["numberOfAmendement"] = len(ret["amendements"])
+        ret["amendements"] = ret["amendements"][:maxNumberOfAmendement]
+        return ret
+
+    """getAmendementsQuery
+				return a all amendements of a document by its uid, than meets the query
+				@params uid : uid of dossier
+				@return :
+
+	"""
+
+    def getAmendementsQuery(self, uid, query, maxNumberOfAmendement=10):
         tableDef = self.__amendementTableDefinition
 
         connection = psycopg2.connect(

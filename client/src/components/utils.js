@@ -1,4 +1,4 @@
-function convertDate(str) {
+export function convertDate(str) {
 
     var date = new Date(str)
     let monthNames = ["jan.", "fev.", "mars", "avril",
@@ -15,5 +15,27 @@ function convertDate(str) {
     return `${day} ${monthName} ${year} `;
 }
 
+export function sanitizeWords(string) {
+    if (string !== undefined) {
+        return string.normalize("NFD").replace(/\p{Diacritic}/gu, "")
+    } else {
+        return string
+    }
+}
 
-export default convertDate
+export function generateSearchWords(spacedSeparatedWords) {
+    var listOfWords = spacedSeparatedWords.split(" ")
+    for (var i = 0; i < listOfWords.length; i++) {
+        listOfWords[i] = "\\b(?=\\w*" + listOfWords[i] + ")\\w+\\b"
+    }
+    return listOfWords
+}
+
+export function firstLetterUppercase(string) {
+    if (string !== undefined) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    } else {
+        return string
+    }
+
+}

@@ -92,6 +92,17 @@ def getAmendements(uid):
         # 405 Method Forbidden
         abort(405)
 
+@app.route("/api/amendementsQuery/<string:uid>&<string:query>", methods=['GET'])
+def getAmendementsQuery(uid, query):
+    if request.method == 'GET':
+        ret = assembleeNationale.getAmendementsQuery(uid, query)
+        print(ret)
+        return ret
+
+    else:
+        # 405 Method Forbidden
+        abort(405)
+
 """
 
 connection = psycopg2.connect(

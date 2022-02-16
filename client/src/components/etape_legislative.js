@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Highlighter from "react-highlight-words";
 import Amendement from './amendement'
-import convertDate from './utils'
+import {convertDate,sanitizeWords,generateSearchWords} from './utils'
 import SubEtapeLegislative from './sub_etape_legislative';
 
 class EtapeLegislative extends React.Component {
@@ -9,13 +9,14 @@ class EtapeLegislative extends React.Component {
         super(props);
         this.state = { displayEtapeLegislative: false, subEtapesLegislatives: null };
         this.getSubEtapesLegislatives(this.props.data.actesLegislatifs)
+        console.log(this.props.data)
     }
 
     getSubEtapesLegislatives(arrayOfEtapes) {
 
         var jsonParse = arrayOfEtapes.acteLegislatif
         if (Array.isArray(jsonParse)) {
-            this.setState({ subEtapesLegislatives: jsonParse })
+            this.setState({ subEtapesLegislatives: jsonParse.reverse() })
         } else {
             this.setState({ subEtapesLegislatives: [jsonParse] })
         }
@@ -30,15 +31,34 @@ class EtapeLegislative extends React.Component {
 
     }
 
+    extractDossierStatus(lastEtape) {
+        var assemblee = ""
+        if (lastEtape.codeActe.substring(0, 2) == "AN") {
+            assemblee = " - " +"AN"
+        } else if (lastEtape.codeActe.substring(0, 2) == "SN") {
+            assemblee = " - " +"Sénat"
+        } else if (lastEtape.codeActe.substring(0, 4) == "PROM"){
+            assemblee = ""
+        } else if (lastEtape.codeActe.substring(0, 3) == "CMP"){
+            assemblee = ""
+        } else if (lastEtape.codeActe.substring(0, 2) == "CC"){
+            assemblee = ""
+        }  else {
+            assemblee = " - " +lastEtape.codeActe
+        }
+
+        return lastEtape.libelleActe.nomCanonique +  assemblee
+    }
+
 
     render() {
         return (
             <div className="subResultBloc">
                 <div className="col text-column-sub">
-                    <div className="col" onClick={this.changeDisplayEtapeLegislative.bind(this)}>
+                    <div className="col cursor" onClick={this.changeDisplayEtapeLegislative.bind(this)}>
                         <div className="row entete" >
                             <div className="col">
-                                {this.state.displayEtapeLegislative ? "➖" : "➕"} {this.props.data.libelleActe.nomCanonique}
+                                {this.state.displayEtapeLegislative ? "➖" : "➕"} {this.extractDossierStatus(this.props.data)}
                             </div>
                         </div>
                     </div>

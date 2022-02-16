@@ -4,12 +4,12 @@ import "./result.css";
 import DocumentLegislatif from './document_legislatif';
 import EtapeLegislative from './etape_legislative';
 
-import convertDate from './utils'
+import { convertDate, sanitizeWords, generateSearchWords} from './utils'
 
 class DossierLegislatif extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { dossierLegislatif: null, etapesLegislatives: null, displayEtapes: false, displayAmendements: false };
+        this.state = { dossierLegislatif: null, etapesLegislatives: null, displayEtapes: false };
         this.getDossierLegislatif(this.props.dossierUid)
     }
 
@@ -17,14 +17,7 @@ class DossierLegislatif extends React.Component {
         this.setState({ displayEtapes: !this.state.displayEtapes })
 
     }
-    changeDisplayAmendements() {
-        this.setState({ displayAmendements: !this.state.displayAmendements })
 
-    }
-
-    firstLetterUppercase(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
-    }
 
     getDossierLegislatif(uid) {
         fetch('http://localhost:5000/api/dossierLegislatif/' + uid)
@@ -57,27 +50,22 @@ class DossierLegislatif extends React.Component {
         }
         var assemblee = ""
         if (lastEtape.codeActe.substring(0, 2) == "AN") {
-            assemblee = "AN"
+            assemblee = " - " + "AN"
         } else if (lastEtape.codeActe.substring(0, 2) == "SN") {
-            assemblee = "Sénat"
+            assemblee = " - " + "Sénat"
+        } else if (lastEtape.codeActe.substring(0, 4) == "PROM") {
+            assemblee = ""
+        } else if (lastEtape.codeActe.substring(0, 3) == "CMP") {
+            assemblee = ""
+        } else if (lastEtape.codeActe.substring(0, 2) == "CC") {
+            assemblee = ""
         } else {
-            assemblee = lastEtape.codeActe
+            assemblee = " - " + lastEtape.codeActe
         }
 
-        return lastEtape.libelleActe.nomCanonique + " - " + assemblee
+        return lastEtape.libelleActe.nomCanonique + assemblee
     }
 
-    sanitizeWords(string) {
-        return string.normalize("NFD").replace(/\p{Diacritic}/gu, "")
-    }
-
-    generateSearchWords(spacedSeparatedWords) {
-        var listOfWords = spacedSeparatedWords.split(" ")
-        for (var i = 0; i < listOfWords.length; i++) {
-            listOfWords[i] = "\\b(?=\\w*" + listOfWords[i] + ")\\w+\\b"
-        }
-        return listOfWords
-    }
 
 
     render() {
@@ -97,8 +85,8 @@ class DossierLegislatif extends React.Component {
                             </div>
                             <div className="row entete">
                                 <Highlighter
-                                    searchWords={this.props.query == "" ? [] : this.generateSearchWords(this.props.query)}
-                                    sanitize={this.sanitizeWords}
+                                    searchWords={this.props.query == "" ? [] : generateSearchWords(this.props.query)}
+                                    sanitize={sanitizeWords}
                                     textToHighlight={this.state.dossierLegislatif.titre} />
 
 
@@ -124,7 +112,7 @@ class DossierLegislatif extends React.Component {
                         </div>
                     </div>
                     <div className="col">
-                        <div className="titleSubResultBloc" onClick={this.changeDisplayEtapes.bind(this)}>
+                        <div className="titleSubResultBloc cursor" onClick={this.changeDisplayEtapes.bind(this)}>
                             {this.state.displayEtapes ? "➖" : "➕"} Élements du dossier 📖
                         </div>
                         {this.state.displayEtapes && this.state.etapesLegislatives.map((data) => <EtapeLegislative key={data.uid} data={data} query={this.props.query} />)}

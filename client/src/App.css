@@ -130,7 +130,7 @@ a {
     margin-top: 1vh;
     padding-top:1vh;
     padding-bottom:1vh;
-    font-size: 1em;
+    font-size: 1rem;
 }
 
 .resultBloc {
@@ -253,10 +253,10 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
   }
 
 .enteteAmendement{
-    font-size: 1.2rem;
-    line-height: 3rem;
+    font-size: 1rem;
+    line-height: 2rem;
     font-weight: 450;
-    min-width: 50vw;
+    min-width: 45vw;
 }
 
 .btnAmendement{
@@ -274,7 +274,7 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
     font-size: 1rem;
 }
 .textAmendement{
-    font-size:1.2rem;
+    font-size:1rem;
 }
 .textDispositifAmendement{
     font-size:1rem;
@@ -282,9 +282,51 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
     color: rgb(108, 117, 125);
 }
 
+.voirAmendements {
+    background-color: rgb(222, 226, 230);
+    border-color: rgb(85, 97, 217);
+    color: rgb(0, 0, 0);
+    /*box-shadow: rgb(0 0 0 / 8%) 0px 0.3rem 0.25rem;*/
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 1.2rem;
+}
 
+.cursor {
+    cursor: pointer;
+}
 
+.text-column-amendement {
+    padding-left:1rem;
+    padding-right:1rem;
+    margin-top : 1vh;
+    margin-bottom : 1vh;
+    text-align: justify ;
+}
 
+.amendement {
+    display: flex;
+    flex-direction: column;
+    padding: 9vh 3.2rem;
+    background: rgb(222, 226, 230);
+    border:1px;
+    text-align: center;
+    margin-top : 0vh;
+    padding:0rem;
+    border-top: 1px solid rgb(255, 255, 255) !important;
+}
+
+.searchAmendements {
+    display: flex;
+    flex-direction: column;
+    padding: 9vh 3.2rem;
+    background: rgb(222, 226, 230);
+    border:1px;
+    margin-top : 0vh;
+    padding: 0.5rem 1rem;
+    /*border-top: 1px solid rgb(255, 255, 255) !important;*/
+}
 
 @media (width <600px) {
     html {
@@ -296,4 +338,16 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
     html {
         font-size: 80%;
     }
+  }
+
+  .label-for-search-amendements {
+    cursor: pointer;
+    font-size: 1.2rem;
+  }
+
+  .search-amendements-input {
+    padding: 1.6rem 2.25rem 1.6rem 1.6rem;
+    border-width: 0px;  
+    border-radius: 1.2rem;
+    font-size: 1.8rem;
   }

@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import Highlighter from "react-highlight-words";
-import convertDate from './utils'
+import {convertDate,sanitizeWords,generateSearchWords, firstLetterUppercase} from './utils'
 
 class Amendement extends React.Component {
     constructor(props) {
         super(props);
         this.state = { displayAmendement: false };
-        console.log(this.props.data)
+        //console.log(this.props.data)
     }
 
     changeDisplayAmendement() {
@@ -14,9 +14,6 @@ class Amendement extends React.Component {
 
     }
 
-    firstLetterUppercase(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
-    }
 
     extractStatus() {
         if (this.props.data.etat.includes("Irrecevable")) {
@@ -47,10 +44,10 @@ class Amendement extends React.Component {
 
 
         return (
-            <div className="subResultBloc">
+            <div className="amendement">
                 <div className="row" >
-                    <div className="col text-column-sub">
-                        <div className="row " onClick={this.changeDisplayAmendement.bind(this)}>
+                    <div className="col text-column-amendement">
+                        <div className="row cursor" onClick={this.changeDisplayAmendement.bind(this)}>
                             <div className="col enteteAmendement">
                                 📝 {this.props.data.article} {this.props.data.alinea}  - déposé le {convertDate(this.props.data.dateDepot)} <span className="dossierStatus"> ▪ {this.extractStatus()}</span>
                             </div>

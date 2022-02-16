@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Highlighter from "react-highlight-words";
 import Amendement from './amendement'
-import convertDate from './utils'
+import {convertDate,sanitizeWords,generateSearchWords, firstLetterUppercase} from './utils'
 
 class DocumentLegislatif extends React.Component {
     constructor(props) {
@@ -28,21 +28,6 @@ class DocumentLegislatif extends React.Component {
             )
     }
 
-    firstLetterUppercase(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
-    }
-
-    sanitizeWords(string) {
-        return string.normalize("NFD").replace(/\p{Diacritic}/gu, "")
-    }
-
-    generateSearchWords(spacedSeparatedWords) {
-        var listOfWords = spacedSeparatedWords.split(" ")
-        for (var i = 0; i < listOfWords.length; i++) {
-            listOfWords[i] = "\\b(?=\\w*" + listOfWords[i] + ")\\w+\\b"
-        }
-        return listOfWords
-    }
 
     render() {
 
@@ -58,9 +43,9 @@ class DocumentLegislatif extends React.Component {
                         </div>
                         <div className="row" >
                             <Highlighter
-                                searchWords={this.props.query == "" ? [] : this.generateSearchWords(this.props.query)}
-                                sanitize={this.sanitizeWords}
-                                textToHighlight={this.firstLetterUppercase(this.props.data.titrePrincipal)} />
+                                searchWords={this.props.query == "" ? [] : generateSearchWords(this.props.query)}
+                                sanitize={sanitizeWords}
+                                textToHighlight={firstLetterUppercase(this.props.data.titrePrincipal)} />
 
 
                         </div>
