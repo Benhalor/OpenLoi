@@ -3,6 +3,7 @@ import Highlighter from "react-highlight-words";
 import "./result.css";
 import DocumentLegislatif from './document_legislatif';
 import EtapeLegislative from './etape_legislative';
+import * as config from './config';
 
 import { convertDate, sanitizeWords, generateSearchWords} from './utils'
 
@@ -20,7 +21,7 @@ class DossierLegislatif extends React.Component {
 
 
     getDossierLegislatif(uid) {
-        fetch('http://localhost:5000/api/dossierLegislatif/' + uid)
+        fetch(config.apiUrl + 'dossierLegislatif/' + uid)
             .then(response => response.json())
             .then(
                 (result) => {

@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import Highlighter from "react-highlight-words";
 import Amendement from './amendement'
 import { convertDate, sanitizeWords, generateSearchWords, firstLetterUppercase } from './utils'
+import * as config from './config';
 import NameForm from './name_form';
 
 class SubEtapeLegislative extends React.Component {
@@ -15,7 +16,7 @@ class SubEtapeLegislative extends React.Component {
     getAssociatedDocument() {
         //console.log(this.props.data)
         if (this.props.data.texteAssocie !== undefined) {
-            fetch('http://localhost:5000/api/documentById/' + this.props.data.texteAssocie)
+            fetch(config.apiUrl + 'documentById/' + this.props.data.texteAssocie)
                 .then(response => response.json())
                 .then(
                     (result) => {
@@ -43,7 +44,7 @@ class SubEtapeLegislative extends React.Component {
             }
             this.state.dateActe = lastEtape.dateActe
 
-            fetch('http://localhost:5000/api/documentById/' + lastEtape.texteAdopte)
+            fetch(config.apiUrl + 'documentById/' + lastEtape.texteAdopte)
                 .then(response => response.json())
                 .then(
                     (result) => {
@@ -60,7 +61,7 @@ class SubEtapeLegislative extends React.Component {
             } else {
                 lastEtape = lastEtape
             }
-            fetch('http://localhost:5000/api/documentById/' + lastEtape.texteAdopte)
+            fetch(config.apiUrl + 'documentById/' + lastEtape.texteAdopte)
                 .then(response => response.json())
                 .then(
                     (result) => {
@@ -75,7 +76,7 @@ class SubEtapeLegislative extends React.Component {
     }
 
     getAmendements(uid) {
-        fetch('http://localhost:5000/api/amendements/' + uid)
+        fetch(config.apiUrl + 'amendements/' + uid)
             .then(response => response.json())
             .then(
                 (result) => {
@@ -88,7 +89,7 @@ class SubEtapeLegislative extends React.Component {
 
     updateAmendementsQuery(event) {
         if (this.state.userQuery != "") {
-            fetch('http://localhost:5000/api/amendementsQuery/' + this.state.userQuery + "&" + this.state.texteAssocie.uid)
+            fetch(config.apiUrl + 'amendementsQuery/' + this.state.userQuery + "&" + this.state.texteAssocie.uid)
                 .then(response => response.json())
                 .then(
                     (result) => {

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import * as config from './config';
 
 class NameForm extends React.Component {
   constructor(props) {
@@ -25,7 +26,7 @@ class NameForm extends React.Component {
 
 
   updateSearchResults(query) {
-    fetch('http://localhost:5000/api/search/' + query)
+    fetch(config.apiUrl + 'search/' + query)
       .then(response => response.json())
       .then(
         (result) => {
@@ -37,7 +38,7 @@ class NameForm extends React.Component {
   }
 
   getLastNews() {
-    fetch('http://localhost:5000/api/lastNews/')
+    fetch(config.apiUrl + 'lastNews/')
       .then(response => response.json())
       .then(
         (result) => {
