@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import json
 import shutil
@@ -62,7 +63,7 @@ class AssembleeNationale:
                 "senatChemin": {"path": "dossierParlementaire:titreDossier:senatChemin", "htmlEscape": False, "type": "VARCHAR ( 2000 )", "search": False},
                 "anChemin": {"path": "dossierParlementaire:titreDossier:titreChemin", "htmlEscape": False, "type": "VARCHAR ( 2000 )", "search": False},
                 "actesLegislatifs": {"path": "dossierParlementaire:actesLegislatifs", "htmlEscape": True, "type": "VARCHAR ( 200000 )", "search": False},
-                "lastUpdate": {"path": "", "htmlEscape": True, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
+                "lastUpdate": {"path": "specialHandling...", "htmlEscape": True, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
 
             }
         }
@@ -87,19 +88,37 @@ class AssembleeNationale:
             }
         }
 
+        self.__questionEcriteTableDefinition = {
+            "tableName": "QUESTIONS_ECRITES",
+            "source": "AN",
+            "schema": {
+                "uid": {"path": "question:uid", "htmlEscape": False, "type": "VARCHAR ( 40 )", "search": True},
+                "rubrique": {"path": "question:indexationAN:rubrique", "htmlEscape": True, "type": "VARCHAR ( 500 )", "search": True},
+                "resume": {"path": "question:indexationAN:ANALYSE:ANA", "htmlEscape": True, "type": "VARCHAR ( 2000 )", "search": True},
+                "auteur": {"path": "question:auteur:identite:acteurRef", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": False},
+                "auteurGroupe": {"path": "question:auteur:groupe:developpe", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": False},
+                "ministere": {"path": "question:minInt:developpe", "htmlEscape": True, "type": "VARCHAR ( 1000 )", "search": True},
+                "question": {"path": "question:textesQuestion", "htmlEscape": True, "type": "VARCHAR ( 200000 )", "search": True},
+                "reponse": {"path": "question:textesReponse", "htmlEscape": True, "type": "VARCHAR ( 200000 )", "search": True},
+                "dateQuestion": {"path": "specialHandling...", "htmlEscape": False, "type": "DATE", "search": False},
+                "dateReponse": {"path": "specialHandling...", "htmlEscape": False, "type": "DATE", "search": False}
+            }
+        }
+
         self.__tableList = {
-            "DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
-            "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE": self.__dossierLegislatifDossierParlementaireTableDefinition,
-            "AMENDEMENT": self.__amendementTableDefinition,
+            # "DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
+            # "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE": self.__dossierLegislatifDossierParlementaireTableDefinition,
+            # "AMENDEMENT": self.__amendementTableDefinition,
+            "QUESTIONS_ECRITES": self.__questionEcriteTableDefinition,
         }
         self.__database = 'assembleenationale'
         self.__userDatabase = 'postgres'
         self.__passwordDatabase = 'password'
         self.__hostDatabase = 'localhost'
         self.__portDatabase = '5432'
-            
+
         if setup:
-        # Setup database for the first time if requiered by user
+            # Setup database for the first time if requiered by user
             self.setupDatabase()
 
         self.__jsonReadOK = 0
@@ -114,20 +133,22 @@ class AssembleeNationale:
 
     def setupDatabase(self):
         # establishing the connection on the postgres database
-        connection = psycopg2.connect(database="postgres", user= self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection = psycopg2.connect(database="postgres", user=self.__userDatabase,
+                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
         # Create database AssembleeNationale if not exists
         try:
             cursor.execute("CREATE database " + self.__database)
             self.__debugPrint("Database "+self.__database +
-                            " created successfully...")
+                              " created successfully...")
         except psycopg2.errors.DuplicateDatabase:
             self.__debugPrint("Database "+self.__database+" already exists")
         connection.close()
 
         # Connect on the new database
-        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
+                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
 
@@ -146,9 +167,10 @@ class AssembleeNationale:
                 for columnName, columnDef in tableDef["schema"].items():
                     columnString += columnName + " "+columnDef["type"]+","
                 query += columnString[:-1]+");"
+                print(query)
                 cursor.execute(query)
                 print("Table "+tableDef["tableName"] +
-                    " created successfully...")
+                      " created successfully...")
             except psycopg2.errors.DuplicateTable:
                 print("Table "+tableDef["tableName"]+" already exists")
 
@@ -173,7 +195,7 @@ class AssembleeNationale:
                 cursor.execute(query)
             except:
                 pass
-            
+
         connection.close()
 
     """downloadSources
@@ -249,7 +271,7 @@ class AssembleeNationale:
 
         for path in sourceList:
             if path[-9:] == "excel.csv":
-                pass #self.__processExcelCsv(path)
+                pass  # self.__processExcelCsv(path)
             if path[-3:] == "zip":
                 self.__processZip(path)
 
@@ -325,7 +347,14 @@ class AssembleeNationale:
 
             pass
         elif sourceName == "QUESTIONS_ECRITES":
-            pass
+            lastTime = time.time()
+            self.__jsonReadOK = 0
+            self.__jsonReadNOK = 0
+            self.__uploadToDb(
+                directoryToExtract+"/json", table="QUESTIONS_ECRITES")
+            print("json QUESTIONS_ECRITES OK:"+str(self.__jsonReadOK))
+            print("json QUESTIONS_ECRITES NOK:"+str(self.__jsonReadNOK))
+            print("Upload QUESTIONS_ECRITES in "+str(time.time()-lastTime))
         elif sourceName == "REUNIONS":
             pass
 
@@ -338,8 +367,9 @@ class AssembleeNationale:
 	"""
 
     def __uploadToDb(self, directory, table="DOSSIERS_LEGISLATIFS_DOCUMENT"):
-        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
-        connection.autocommit = False
+        connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
+                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection.autocommit = True
         cursor = connection.cursor()
 
         if table in self.__tableList:
@@ -366,9 +396,13 @@ class AssembleeNationale:
                                 self.__jsonReadOK += 1
                             except psycopg2.errors.UniqueViolation:
                                 pass
+                            except KeyboardInterrupt:
+                                sys.exit(0)
                             except:
                                 print(path)
                                 traceback.print_exc()
+                        except KeyboardInterrupt:
+                            sys.exit(0)
                         except:
                             traceback.print_exc()
                             self.__jsonReadNOK += 1
@@ -395,11 +429,33 @@ class AssembleeNationale:
                     "value"]
                 columnString += columnName+","
                 valuesString += "\'"+lastUpdate+"\',"
+            elif tableDef["tableName"] == "QUESTIONS_ECRITES" and columnName == "dateReponse":
+                # Sometimes there is not yet a response. Sometimes there are multiple response in a list. In this case, take the last date. Moreover, date format is not standard
+                if doc["question"]["textesReponse"] is not None:
+                    if type(doc["question"]["textesReponse"]["texteReponse"]) is list:
+                        date = doc["question"]["textesReponse"]["texteReponse"][-1]["infoJO"]["dateJO"]
+                    else:
+                        date = doc["question"]["textesReponse"]["texteReponse"]["infoJO"]["dateJO"]
+                    columnString += columnName+","
+                    valuesString += "TO_DATE(\'"+date+"\' , \'DD/MM/YYYY\'),"
+            elif tableDef["tableName"] == "QUESTIONS_ECRITES" and columnName == "dateQuestion":
+                # Sometimes there are multiple question in a list. In this case, take the last date. Moreover, date format is not standard
+                if type(doc["question"]["textesQuestion"]["texteQuestion"]) is list:
+                    date = doc["question"]["textesQuestion"]["texteQuestion"][-1]["infoJO"]["dateJO"]
+                else:
+                    date = doc["question"]["textesQuestion"]["texteQuestion"]["infoJO"]["dateJO"]
+                columnString += columnName+","
+                valuesString += "TO_DATE(\'"+date+"\' , \'DD/MM/YYYY\'),"
             else:
                 try:
                     docPath = doc
                     for pathIter in columnDef["path"].split(":"):
-                        docPath = docPath[pathIter]
+                        try:
+                            docPath = docPath[pathIter]
+                        except TypeError:
+                            pass
+                            # case value is null in json
+
                     if docPath is not None:
                         if type(docPath) == dict:
                             docPath = json.dumps(docPath)
@@ -411,6 +467,8 @@ class AssembleeNationale:
                                 columnString += columnName+","
                             except ValueError:
                                 pass
+                            except KeyboardInterrupt:
+                                sys.exit(0)
                         elif columnDef["type"] == "TIMESTAMP WITH TIME ZONE":
                             try:
                                 datetime.datetime.strptime(
@@ -419,6 +477,8 @@ class AssembleeNationale:
                                 columnString += columnName+","
                             except ValueError:
                                 pass
+                            except KeyboardInterrupt:
+                                sys.exit(0)
                         elif columnDef["htmlEscape"]:
                             valuesString += "\'" + \
                                 self.__htmlEscape(docPath)+"\',"
@@ -426,9 +486,10 @@ class AssembleeNationale:
                         else:
                             valuesString += "\'"+docPath+"\',"
                             columnString += columnName+","
-                except KeyError:
-                    pass
+                except KeyboardInterrupt:
+                    sys.exit(0)
                 except:
+                    print(doc)
                     traceback.print_exc()
         query += columnString[:-1] + ") VALUES (" + valuesString[:-1]+");"
         return query
@@ -442,7 +503,8 @@ class AssembleeNationale:
 	"""
 
     def search(self, term, maxNumberOfResults=10):
-        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
+                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
 
@@ -552,7 +614,8 @@ class AssembleeNationale:
 	"""
 
     def getLastNews(self, maxNumberOfResults=100):
-        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
+                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
 
@@ -563,7 +626,6 @@ class AssembleeNationale:
 
         # Get the results
         tableDef = self.__dossierLegislatifDossierParlementaireTableDefinition
-        
 
         count = 0
 
@@ -574,9 +636,9 @@ class AssembleeNationale:
             ORDER BY dateDepot DESC LIMIT %s;"
         ret["listOfDossiersLegislatifs"] = []
         try:
-            cursor.execute(query,(maxNumberOfResults,))
+            cursor.execute(query, (maxNumberOfResults,))
             for entry in cursor.fetchall():
-                count+=1
+                count += 1
                 ret["listOfDossiersLegislatifs"].append(entry[0])
         except:
             traceback.print_exc()
@@ -594,7 +656,8 @@ class AssembleeNationale:
 	"""
 
     def __sortDossierLegislatifsUid(self, uidList):
-        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
+                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
 
@@ -634,9 +697,8 @@ class AssembleeNationale:
             ret = string.replace("'", "''")
         except:
             traceback.print_exc()
+            print(string)
         return ret
-
-
 
     """getDocumentByUid
 				return a dossier legislatif by its uid
@@ -646,7 +708,8 @@ class AssembleeNationale:
 	"""
 
     def getDocumentByUid(self, uid):
-        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
+                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
 
@@ -671,7 +734,6 @@ class AssembleeNationale:
         connection.close()
         return ret
 
-
     """getDossierLegislatifByUid
 				return a dossier legislatif by its uid
 				@params uid : uid of dossier
@@ -680,7 +742,8 @@ class AssembleeNationale:
 	"""
 
     def getDossierLegislatifByUid(self, uid):
-        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
+                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
 
@@ -713,7 +776,8 @@ class AssembleeNationale:
 	"""
 
     def getDossierLegislatifdocumentsByUid(self, uid):
-        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
+                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
 
@@ -752,7 +816,8 @@ class AssembleeNationale:
 	"""
 
     def getAmendementsByUid(self, uid,  maxNumberOfAmendement=10):
-        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
+                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
 
@@ -792,13 +857,15 @@ class AssembleeNationale:
 	"""
 
     def getAmendementsQuery(self, uidTexteLegislatifRef, term, maxNumberOfAmendement=10):
-        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
+                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
 
         tableDef = self.__amendementTableDefinition
 
-        texteLegislatifRef = uidTexteLegislatifRef.replace("'", "\\'").replace("--", "")
+        texteLegislatifRef = uidTexteLegislatifRef.replace(
+            "'", "\\'").replace("--", "")
         processedQuery = term.replace("'", "\\'").replace("--", "")
 
         ret = {}
@@ -825,7 +892,7 @@ class AssembleeNationale:
         # First try by the words adjacent
         processedQueryLogic = processedQuery.replace(" ", "<1>")
         try:
-            cursor.execute(query, (processedQueryLogic,texteLegislatifRef,))
+            cursor.execute(query, (processedQueryLogic, texteLegislatifRef,))
             for entry in cursor.fetchall():
                 entryData = {}
                 listOfColumn = list(
@@ -839,11 +906,11 @@ class AssembleeNationale:
                     ret["amendements"].append(entryData)
         except:
             traceback.print_exc()
-        
+
         # Then try by the words anywhere
         processedQueryLogic = processedQuery.replace(" ", "&")
         try:
-            cursor.execute(query, (processedQueryLogic,texteLegislatifRef,))
+            cursor.execute(query, (processedQueryLogic, texteLegislatifRef,))
             for entry in cursor.fetchall():
                 entryData = {}
                 listOfColumn = list(
@@ -857,11 +924,11 @@ class AssembleeNationale:
                     ret["amendements"].append(entryData)
         except:
             traceback.print_exc()
-        
+
         # Then try by any word
         processedQueryLogic = processedQuery.replace(" ", "|")
         try:
-            cursor.execute(query, (processedQueryLogic,texteLegislatifRef,))
+            cursor.execute(query, (processedQueryLogic, texteLegislatifRef,))
             for entry in cursor.fetchall():
                 entryData = {}
                 listOfColumn = list(
@@ -875,7 +942,6 @@ class AssembleeNationale:
                     ret["amendements"].append(entryData)
         except:
             traceback.print_exc()
-        
 
         ret["numberOfAmendement"] = len(ret["amendements"])
         ret["amendements"] = ret["amendements"][:maxNumberOfAmendement]
