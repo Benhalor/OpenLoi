@@ -1,4 +1,4 @@
-# OpenLoi - Outil de surveillance de contenu législatif
+# Outil de surveillance de contenu législatif
 ![2022-02-17 11-01-02 (1)](https://user-images.githubusercontent.com/10956689/154443534-dc474393-a9ce-4340-bf7c-649b8f545351.gif)
 
 
