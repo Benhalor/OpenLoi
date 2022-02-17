@@ -88,15 +88,18 @@ class AssembleeNationale:
         }
 
         self.__tableList = {
-            # "DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
-            # "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE": self.__dossierLegislatifDossierParlementaireTableDefinition,
+            "DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
+            "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE": self.__dossierLegislatifDossierParlementaireTableDefinition,
             "AMENDEMENT": self.__amendementTableDefinition,
         }
-
         self.__database = 'assembleenationale'
-
-        # Setup database for the first time if requiered by user
+        self.__userDatabase = 'postgres'
+        self.__passwordDatabase = 'password'
+        self.__hostDatabase = 'localhost'
+        self.__portDatabase = '5432'
+            
         if setup:
+        # Setup database for the first time if requiered by user
             self.setupDatabase()
 
         self.__jsonReadOK = 0
@@ -111,24 +114,20 @@ class AssembleeNationale:
 
     def setupDatabase(self):
         # establishing the connection on the postgres database
-        connection = psycopg2.connect(
-            database="postgres", user='postgres', password='password', host='localhost', port='5432'
-        )
+        connection = psycopg2.connect(database="postgres", user= self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
-
         # Create database AssembleeNationale if not exists
         try:
-            cursor.execute("CREATE database " + self.__database+";")
+            cursor.execute("CREATE database " + self.__database)
             self.__debugPrint("Database "+self.__database +
-                              " created successfully...")
+                            " created successfully...")
         except psycopg2.errors.DuplicateDatabase:
             self.__debugPrint("Database "+self.__database+" already exists")
+        connection.close()
 
         # Connect on the new database
-        connection = psycopg2.connect(
-            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
-        )
+        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
 
@@ -149,7 +148,7 @@ class AssembleeNationale:
                 query += columnString[:-1]+");"
                 cursor.execute(query)
                 print("Table "+tableDef["tableName"] +
-                      " created successfully...")
+                    " created successfully...")
             except psycopg2.errors.DuplicateTable:
                 print("Table "+tableDef["tableName"]+" already exists")
 
@@ -174,6 +173,8 @@ class AssembleeNationale:
                 cursor.execute(query)
             except:
                 pass
+            
+        connection.close()
 
     """downloadSources
 			Download files from a source list and store them in a specified directory
@@ -248,7 +249,7 @@ class AssembleeNationale:
 
         for path in sourceList:
             if path[-9:] == "excel.csv":
-                self.__processExcelCsv(path)
+                pass #self.__processExcelCsv(path)
             if path[-3:] == "zip":
                 self.__processZip(path)
 
@@ -337,13 +338,12 @@ class AssembleeNationale:
 	"""
 
     def __uploadToDb(self, directory, table="DOSSIERS_LEGISLATIFS_DOCUMENT"):
+        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection.autocommit = False
+        cursor = connection.cursor()
+
         if table in self.__tableList:
             tableDefinition = self.__tableList[table]
-            connection = psycopg2.connect(
-                database=self.__database, user='postgres', password='password', host='localhost', port='5432'
-            )
-            #connection.autocommit = True
-            cursor = connection.cursor()
             count = 0
             lastTime = time.time()
             for root, subdirs, files in os.walk(directory):
@@ -373,6 +373,8 @@ class AssembleeNationale:
                             traceback.print_exc()
                             self.__jsonReadNOK += 1
             print(count)
+        connection.commit()
+        connection.close()
 
     """__buildQueryFromDef
 				Build a query to insert an element from a dict defining the table
@@ -440,12 +442,11 @@ class AssembleeNationale:
 	"""
 
     def search(self, term, maxNumberOfResults=10):
-        processedQuery = term.replace("'", "\\'").replace("--", "")
-        connection = psycopg2.connect(
-            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
-        )
+        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
+
+        processedQuery = term.replace("'", "\\'").replace("--", "")
 
         ret = {}
         ret["listOfDossiersLegislatifs"] = []
@@ -474,7 +475,6 @@ class AssembleeNationale:
         processedQueryLogic = processedQuery.replace(" ", "<1>")
         try:
             cursor.execute(query, (processedQueryLogic,))
-
             for entry in cursor.fetchall():
                 count += 1
                 entryData = {}
@@ -496,7 +496,6 @@ class AssembleeNationale:
         processedQueryLogic = processedQuery.replace(" ", "&")
         try:
             cursor.execute(query, (processedQueryLogic,))
-
             for entry in cursor.fetchall():
                 count += 1
                 entryData = {}
@@ -518,7 +517,6 @@ class AssembleeNationale:
         processedQueryLogic = processedQuery.replace(" ", "|")
         try:
             cursor.execute(query, (processedQueryLogic,))
-
             for entry in cursor.fetchall():
                 count += 1
                 entryData = {}
@@ -543,6 +541,7 @@ class AssembleeNationale:
         ret["listOfDossiersLegislatifs"].extend(
             self.__sortDossierLegislatifsUid(wordORListOfDossiersLegislatifs))
         ret["listOfDossiersLegislatifs"] = ret["listOfDossiersLegislatifs"][:maxNumberOfResults]
+        connection.close()
         return json.dumps(ret)
 
     """getLastNews
@@ -553,9 +552,7 @@ class AssembleeNationale:
 	"""
 
     def getLastNews(self, maxNumberOfResults=100):
-        connection = psycopg2.connect(
-            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
-        )
+        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
 
@@ -586,6 +583,7 @@ class AssembleeNationale:
 
         ret["count"] = count
         ret["listOfDossiersLegislatifs"] = ret["listOfDossiersLegislatifs"][:maxNumberOfResults]
+        connection.close()
         return json.dumps(ret)
 
     """__sortDossierLegislatifsUid
@@ -596,9 +594,7 @@ class AssembleeNationale:
 	"""
 
     def __sortDossierLegislatifsUid(self, uidList):
-        connection = psycopg2.connect(
-            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
-        )
+        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
 
@@ -611,6 +607,7 @@ class AssembleeNationale:
             try:
                 cursor.execute(query, (uid,))
                 entry = cursor.fetchone()
+                print(entry)
                 lastUpdate = entry[0]
                 uidAndDateList.append({"uid": uid, "date": lastUpdate})
             except:
@@ -622,7 +619,7 @@ class AssembleeNationale:
         ret = []
         for element in uidAndDateList:
             ret.append(element["uid"])
-
+        connection.close()
         return ret
 
     """__htmlEscape
@@ -649,13 +646,11 @@ class AssembleeNationale:
 	"""
 
     def getDocumentByUid(self, uid):
-        tableDef = self.__dossierLegislatifDocumentTableDefinition
-
-        connection = psycopg2.connect(
-            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
-        )
+        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
+
+        tableDef = self.__dossierLegislatifDocumentTableDefinition
 
         ret = {}
         query = "SELECT "
@@ -673,6 +668,7 @@ class AssembleeNationale:
                 ret[listOfColumn[i]] = entry[i]
         except:
             traceback.print_exc()
+        connection.close()
         return ret
 
 
@@ -684,13 +680,11 @@ class AssembleeNationale:
 	"""
 
     def getDossierLegislatifByUid(self, uid):
-        tableDef = self.__dossierLegislatifDossierParlementaireTableDefinition
-
-        connection = psycopg2.connect(
-            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
-        )
+        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
+
+        tableDef = self.__dossierLegislatifDossierParlementaireTableDefinition
 
         ret = {}
         query = "SELECT "
@@ -708,6 +702,7 @@ class AssembleeNationale:
                 ret[listOfColumn[i]] = entry[i]
         except:
             traceback.print_exc()
+        connection.close()
         return ret
 
     """getDossierLegislatifdocumentsByUid
@@ -718,13 +713,11 @@ class AssembleeNationale:
 	"""
 
     def getDossierLegislatifdocumentsByUid(self, uid):
-        tableDef = self.__dossierLegislatifDocumentTableDefinition
-
-        connection = psycopg2.connect(
-            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
-        )
+        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
+
+        tableDef = self.__dossierLegislatifDocumentTableDefinition
 
         ret = {}
         ret["documents"] = []
@@ -748,6 +741,7 @@ class AssembleeNationale:
                 ret["documents"].append(entryData)
         except:
             pass
+        connection.close()
         return ret
 
     """getAmendementsByUid
@@ -758,13 +752,11 @@ class AssembleeNationale:
 	"""
 
     def getAmendementsByUid(self, uid,  maxNumberOfAmendement=10):
-        tableDef = self.__amendementTableDefinition
-
-        connection = psycopg2.connect(
-            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
-        )
+        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
+
+        tableDef = self.__amendementTableDefinition
 
         ret = {}
         ret["amendements"] = []
@@ -789,6 +781,7 @@ class AssembleeNationale:
             pass
         ret["numberOfAmendement"] = len(ret["amendements"])
         ret["amendements"] = ret["amendements"][:maxNumberOfAmendement]
+        connection.close()
         return ret
 
     """getAmendementsQuery
@@ -799,16 +792,14 @@ class AssembleeNationale:
 	"""
 
     def getAmendementsQuery(self, uidTexteLegislatifRef, term, maxNumberOfAmendement=10):
+        connection =  psycopg2.connect(database=self.__database, user=self.__userDatabase, password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection.autocommit = True
+        cursor = connection.cursor()
+
         tableDef = self.__amendementTableDefinition
 
         texteLegislatifRef = uidTexteLegislatifRef.replace("'", "\\'").replace("--", "")
         processedQuery = term.replace("'", "\\'").replace("--", "")
-
-        connection = psycopg2.connect(
-            database=self.__database, user='postgres', password='password', host='localhost', port='5432'
-        )
-        connection.autocommit = True
-        cursor = connection.cursor()
 
         ret = {}
         ret["amendements"] = []
@@ -835,7 +826,6 @@ class AssembleeNationale:
         processedQueryLogic = processedQuery.replace(" ", "<1>")
         try:
             cursor.execute(query, (processedQueryLogic,texteLegislatifRef,))
-
             for entry in cursor.fetchall():
                 entryData = {}
                 listOfColumn = list(
@@ -854,7 +844,6 @@ class AssembleeNationale:
         processedQueryLogic = processedQuery.replace(" ", "&")
         try:
             cursor.execute(query, (processedQueryLogic,texteLegislatifRef,))
-
             for entry in cursor.fetchall():
                 entryData = {}
                 listOfColumn = list(
@@ -873,7 +862,6 @@ class AssembleeNationale:
         processedQueryLogic = processedQuery.replace(" ", "|")
         try:
             cursor.execute(query, (processedQueryLogic,texteLegislatifRef,))
-
             for entry in cursor.fetchall():
                 entryData = {}
                 listOfColumn = list(
@@ -891,6 +879,7 @@ class AssembleeNationale:
 
         ret["numberOfAmendement"] = len(ret["amendements"])
         ret["amendements"] = ret["amendements"][:maxNumberOfAmendement]
+        connection.close()
         return ret
 
     """__extractLastDateDossierParlementaire

@@ -12,8 +12,8 @@ assembleeNationale = AssembleeNationale.AssembleeNationale(verbose=2, setup=True
 r = assembleeNationale.downloadSources("AssembleeNationale/data/")
 assembleeNationale.processSources("AssembleeNationale/data/", r["updatedSources"])
 print(assembleeNationale.search("test"))
-print(assembleeNationale.getDossierLegislatifByUid("PIONANR5L15B3619"))
-assembleeNationale.getDossierLegislatifdocumentsByUid("DLR5L15N37471")
+print(assembleeNationale.getDossierLegislatifByUid("DLR5L15N37471"))
+assembleeNationale.getDossierLegislatifdocumentsByUid("PIONANR5L15B3619")
 print(assembleeNationale.getAmendementsByUid("PNREANR5L15B0480"))
 
 """

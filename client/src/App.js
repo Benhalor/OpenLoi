@@ -31,7 +31,7 @@ class App extends React.Component {
                   <a href="/apropos">À propos</a>
                 </div>
                 <div className="col-auto border-start">
-                  <a href="/apropos">Bonjour</a>
+                  <a href="https://github.com/Benhalor/OpenLoi" target="_blank" rel="noopener noreferrer">Github</a>
                 </div>
               </div>
             </div>

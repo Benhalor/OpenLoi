@@ -7,7 +7,7 @@ import NameForm from './name_form';
 class SubEtapeLegislative extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { texteAssocie: null, amendements: null, dateActe: null, userQuery: ""};
+        this.state = { texteAssocie: null, amendements: null, amendementsQuery: null, dateActe: null, userQuery: ""};
         this.getAssociatedDocument()
         //console.log(this.state.data)
     }
@@ -92,12 +92,13 @@ class SubEtapeLegislative extends React.Component {
                 .then(response => response.json())
                 .then(
                     (result) => {
-                        this.setState({ amendements: result })
+                        this.setState({ amendementsQuery: result })
 
                     }
 
                 )
         } else {
+            this.setState({ amendementsQuery: null })
             this.getAmendements(this.state.texteAssocie.uid)
         }
         event.preventDefault();
@@ -182,9 +183,16 @@ class SubEtapeLegislative extends React.Component {
                             </div>
 
                             {/* Display Amendements*/}
-                            {(this.state.amendements !== null && this.state.displayAmendements) && this.state.amendements.amendements.map((data) => <Amendement key={data.uid + this.state.userQuery} data={data} query={this.state.userQuery} />)}
-                            {(this.state.displayAmendements && this.state.amendements.amendements.length < this.state.amendements.numberOfAmendement)
+                            {(this.state.amendementsQuery === null && this.state.amendements !== null && this.state.displayAmendements) && this.state.amendements.amendements.map((data) => <Amendement key={data.uid + this.props.query} data={data} query={this.props.query} />)}
+                            {(this.state.amendementsQuery === null && this.state.displayAmendements && this.state.amendements.amendements.length < this.state.amendements.numberOfAmendement)
                                 && <div className="voirPlus">Voir {this.state.amendements.numberOfAmendement - this.state.amendements.amendements.length} amendements de plus...</div>
+
+                            }
+
+                            {/* Display Amendements got by search*/}
+                            {(this.state.amendementsQuery !== null && this.state.displayAmendements) && this.state.amendementsQuery.amendements.map((data) => <Amendement key={data.uid + this.state.userQuery} data={data} query={this.state.userQuery} />)}
+                            {(this.state.amendementsQuery !== null && this.state.displayAmendements && this.state.amendementsQuery.amendements.length < this.state.amendementsQuery.numberOfAmendement)
+                                && <div className="voirPlus">Voir {this.state.amendementsQuery.numberOfAmendement - this.state.amendementsQuery.amendements.length} amendements de plus...</div>
 
                             }
                         </div>
