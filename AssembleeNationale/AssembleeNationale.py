@@ -22,7 +22,7 @@ class AssembleeNationale:
 
     """
 
-    def __init__(self, database='', initialDatabase='', userDatabase='', passwordDatabase='', hostDatabase='', portDatabase='', verbose=0, setup=False):
+    def __init__(self, database='', userDatabase='', passwordDatabase='', hostDatabase='', portDatabase='', verbose=0, setup=False):
 
         self.__verbose = verbose
         self.__sourceList = {
@@ -107,9 +107,9 @@ class AssembleeNationale:
         }
 
         self.__tableList = {
-            # "DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
-            # "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE": self.__dossierLegislatifDossierParlementaireTableDefinition,
-            # "AMENDEMENT": self.__amendementTableDefinition,
+            "DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
+            "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE": self.__dossierLegislatifDossierParlementaireTableDefinition,
+            "AMENDEMENT": self.__amendementTableDefinition,
             "QUESTIONS_ECRITES": self.__questionEcriteTableDefinition,
         }
 
@@ -117,7 +117,6 @@ class AssembleeNationale:
 
 
         self.__database = database
-        self.__initialDatabase = initialDatabase
         self.__userDatabase = userDatabase
         self.__passwordDatabase = passwordDatabase
         self.__hostDatabase = hostDatabase
@@ -138,20 +137,6 @@ class AssembleeNationale:
 	"""
 
     def setupDatabase(self):
-        # establishing the connection on the postgres database
-        connection = psycopg2.connect(database=self.__initialDatabase, user=self.__userDatabase,
-                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
-        connection.autocommit = True
-        cursor = connection.cursor()
-        # Create database AssembleeNationale if not exists
-        try:
-            cursor.execute("CREATE database " + self.__database)
-            self.__debugPrint("Database "+self.__database +
-                              " created successfully...")
-        except psycopg2.errors.DuplicateDatabase:
-            self.__debugPrint("Database "+self.__database+" already exists")
-        connection.close()
-
         # Connect on the new database
         connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
                                       password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)

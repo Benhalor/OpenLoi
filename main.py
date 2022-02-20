@@ -7,8 +7,7 @@ import AssembleeNationale
 
 # Clever cloud
 assembleeNationale = AssembleeNationale.AssembleeNationale(
-    database='assembleenationale',
-    initialDatabase = os.getenv("POSTGRESQL_ADDON_DB"),
+    database=os.getenv("POSTGRESQL_ADDON_DB"),
     userDatabase = os.getenv("POSTGRESQL_ADDON_USER"),
     passwordDatabase = os.getenv("POSTGRESQL_ADDON_PASSWORD"),
     hostDatabase = os.getenv("POSTGRESQL_ADDON_HOST"),
@@ -18,8 +17,7 @@ assembleeNationale = AssembleeNationale.AssembleeNationale(
 
 # Local
 """assembleeNationale = AssembleeNationale.AssembleeNationale(
-    database='assembleenationale',
-    initialDatabase='postgres',
+    database='postgres',
     userDatabase='postgres',
     passwordDatabase='password',
     hostDatabase='localhost',
