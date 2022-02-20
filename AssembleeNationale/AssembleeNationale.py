@@ -28,7 +28,7 @@ class AssembleeNationale:
         self.__sourceList = {
             "DOSSIERS_LEGISLATIFS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/dossiers_legislatifs/Dossiers_Legislatifs_XV.json.zip", "pollingFrequency": 1000000},
             "AGENDA": {"link": "http://data.assemblee-nationale.fr/static/openData/repository/15/vp/seances/seances_publique_excel.csv", "pollingFrequency": 1000000},
-            "AMENDEMENTS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/amendements_legis/Amendements_XV.json.zip", "pollingFrequency": 1000000},
+            #"AMENDEMENTS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/amendements_legis/Amendements_XV.json.zip", "pollingFrequency": 1000000},
             "DEBATS_EN_SEANCE_PUBLIQUE": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/vp/syceronbrut/syseron.xml.zip", "pollingFrequency": 1000000},
             "VOTES": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/scrutins/Scrutins_XV.json.zip", "pollingFrequency": 1000000},
             "QUESTIONS_AU_GOUVERNEMENT": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_gouvernement/Questions_gouvernement_XV.json.zip", "pollingFrequency": 100000},
@@ -109,7 +109,7 @@ class AssembleeNationale:
         self.__tableList = {
             "DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
             "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE": self.__dossierLegislatifDossierParlementaireTableDefinition,
-            "AMENDEMENT": self.__amendementTableDefinition,
+            #"AMENDEMENT": self.__amendementTableDefinition,
             "QUESTIONS_ECRITES": self.__questionEcriteTableDefinition,
         }
 
@@ -209,7 +209,6 @@ class AssembleeNationale:
         updatedSources = []
 
         for sourceName, source in sourceList.items():
-
             sourceLink = source["link"]
             pollingFrequency = source["pollingFrequency"]
 
@@ -223,7 +222,7 @@ class AssembleeNationale:
             # Download file only if it is older than POLLING_FREQUENCY_S, (or not exists).
             if not(os.path.exists(dataName)) or time.time() - os.path.getmtime(dataName) > pollingFrequency:
                 self.__debugPrint("Start downloading " +
-                                  dataName+"...", end="", level=1)
+                                dataName+"...", end="", level=1)
                 sourceFile = requests.get(sourceLink, allow_redirects=True)
                 f = open(dataName, 'wb')
                 f.write(sourceFile.content)
@@ -444,6 +443,10 @@ class AssembleeNationale:
                         try:
                             docPath = docPath[pathIter]
                         except TypeError:
+                            pass
+                        except KeyboardInterrupt:
+                            sys.exit(0)
+                        except:
                             pass
                             # case value is null in json
 

@@ -23,7 +23,7 @@ assembleeNationale = AssembleeNationale.AssembleeNationale(
     hostDatabase='localhost',
     portDatabase='5432',
     verbose=2,
-    setup=False)"""
+    setup=True)"""
 
 r = assembleeNationale.downloadSources("AssembleeNationale/data/")
 assembleeNationale.processSources(
