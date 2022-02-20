@@ -1,16 +1,34 @@
 import sys
-import time
-import datetime
-import json
 
 sys.path.append('AssembleeNationale')
 import AssembleeNationale
 
 
-assembleeNationale = AssembleeNationale.AssembleeNationale(verbose=2, setup=True)
+# Clever cloud
+assembleeNationale = AssembleeNationale.AssembleeNationale(
+    database='assembleenationale',
+    initialDatabase = POSTGRESQL_ADDON_DB,
+    userDatabase = POSTGRESQL_ADDON_USER,
+    passwordDatabase = POSTGRESQL_ADDON_PASSWORD,
+    hostDatabase = POSTGRESQL_ADDON_HOST,
+    portDatabase = POSTGRESQL_ADDON_PORT,
+    verbose=2, 
+    setup=True)
+
+# Local
+"""assembleeNationale = AssembleeNationale.AssembleeNationale(
+    database='assembleenationale',
+    initialDatabase='postgres',
+    userDatabase='postgres',
+    passwordDatabase='password',
+    hostDatabase='localhost',
+    portDatabase='5432',
+    verbose=2,
+    setup=False)"""
 
 r = assembleeNationale.downloadSources("AssembleeNationale/data/")
-assembleeNationale.processSources("AssembleeNationale/data/", r["updatedSources"])
+assembleeNationale.processSources(
+    "AssembleeNationale/data/", r["updatedSources"])
 print(assembleeNationale.search("test"))
 print(assembleeNationale.getDossierLegislatifByUid("DLR5L15N37471"))
 assembleeNationale.getDossierLegislatifdocumentsByUid("PIONANR5L15B3619")

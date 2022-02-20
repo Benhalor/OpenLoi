@@ -22,9 +22,10 @@ class AssembleeNationale:
 
     """
 
-    def __init__(self, verbose=0, setup=False):
+    def __init__(self, database='', initialDatabase='', userDatabase='', passwordDatabase='', hostDatabase='', portDatabase='', verbose=0, setup=False):
+
         self.__verbose = verbose
-        self.__sourceList = sourceList = {
+        self.__sourceList = {
             "DOSSIERS_LEGISLATIFS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/dossiers_legislatifs/Dossiers_Legislatifs_XV.json.zip", "pollingFrequency": 1000000},
             "AGENDA": {"link": "http://data.assemblee-nationale.fr/static/openData/repository/15/vp/seances/seances_publique_excel.csv", "pollingFrequency": 1000000},
             "AMENDEMENTS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/amendements_legis/Amendements_XV.json.zip", "pollingFrequency": 1000000},
@@ -112,20 +113,15 @@ class AssembleeNationale:
             "QUESTIONS_ECRITES": self.__questionEcriteTableDefinition,
         }
 
-        """self.__database = 'assembleenationale'
-        self.__initialDatabase = 'postgres'
-        self.__userDatabase = 'postgres'
-        self.__passwordDatabase = 'password'
-        self.__hostDatabase = 'localhost'
-        self.__portDatabase = '5432'"""
+        
 
 
-        self.__database = 'assembleenationale'
-        self.__initialDatabase = POSTGRESQL_ADDON_DB
-        self.__userDatabase = POSTGRESQL_ADDON_USER
-        self.__passwordDatabase = POSTGRESQL_ADDON_PASSWORD
-        self.__hostDatabase = POSTGRESQL_ADDON_HOST
-        self.__portDatabase = POSTGRESQL_ADDON_PORT
+        self.__database = database
+        self.__initialDatabase = initialDatabase
+        self.__userDatabase = userDatabase
+        self.__passwordDatabase = passwordDatabase
+        self.__hostDatabase = hostDatabase
+        self.__portDatabase = portDatabase
 
         if setup:
             # Setup database for the first time if requiered by user
