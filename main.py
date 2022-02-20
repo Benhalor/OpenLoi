@@ -7,11 +7,11 @@ import AssembleeNationale
 # Clever cloud
 assembleeNationale = AssembleeNationale.AssembleeNationale(
     database='assembleenationale',
-    initialDatabase = POSTGRESQL_ADDON_DB,
-    userDatabase = POSTGRESQL_ADDON_USER,
-    passwordDatabase = POSTGRESQL_ADDON_PASSWORD,
-    hostDatabase = POSTGRESQL_ADDON_HOST,
-    portDatabase = POSTGRESQL_ADDON_PORT,
+    initialDatabase = os.getenv("POSTGRESQL_ADDON_DB"),
+    userDatabase = os.getenv("POSTGRESQL_ADDON_USER"),
+    passwordDatabase = os.getenv("POSTGRESQL_ADDON_PASSWORD"),
+    hostDatabase = os.getenv("POSTGRESQL_ADDON_HOST"),
+    portDatabase = os.getenv("POSTGRESQL_ADDON_PORT"),
     verbose=2, 
     setup=True)
 
