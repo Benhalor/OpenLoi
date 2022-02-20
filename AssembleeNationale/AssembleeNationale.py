@@ -111,11 +111,21 @@ class AssembleeNationale:
             # "AMENDEMENT": self.__amendementTableDefinition,
             "QUESTIONS_ECRITES": self.__questionEcriteTableDefinition,
         }
-        self.__database = 'assembleenationale'
+
+        """self.__database = 'assembleenationale'
+        self.__initialDatabase = 'postgres'
         self.__userDatabase = 'postgres'
         self.__passwordDatabase = 'password'
         self.__hostDatabase = 'localhost'
-        self.__portDatabase = '5432'
+        self.__portDatabase = '5432'"""
+
+
+        self.__database = 'assembleenationale'
+        self.__initialDatabase = POSTGRESQL_ADDON_DB
+        self.__userDatabase = POSTGRESQL_ADDON_USER
+        self.__passwordDatabase = POSTGRESQL_ADDON_PASSWORD
+        self.__hostDatabase = POSTGRESQL_ADDON_HOST
+        self.__portDatabase = POSTGRESQL_ADDON_PORT
 
         if setup:
             # Setup database for the first time if requiered by user
@@ -133,7 +143,7 @@ class AssembleeNationale:
 
     def setupDatabase(self):
         # establishing the connection on the postgres database
-        connection = psycopg2.connect(database="postgres", user=self.__userDatabase,
+        connection = psycopg2.connect(database=self.__initialDatabase, user=self.__userDatabase,
                                       password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
