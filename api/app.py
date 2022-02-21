@@ -24,7 +24,7 @@ assembleeNationale = AssembleeNationale.AssembleeNationale(
     hostDatabase = os.getenv("POSTGRESQL_ADDON_HOST"),
     portDatabase = os.getenv("POSTGRESQL_ADDON_PORT"),
     verbose=2, 
-    setup=True)
+    setup=False)
 
 # Local
 """assembleeNationale = AssembleeNationale.AssembleeNationale(
