@@ -1,5 +1,6 @@
 {
   "name": "open_loi_project",
+  "main" : "App.js",
   "version": "0.1.0",
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.4",
