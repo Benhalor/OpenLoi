@@ -16,25 +16,26 @@ from flask_cors import CORS, cross_origin
 app = Flask(__name__)
 cors = CORS(app)
 
-# Clever cloud
-assembleeNationale = AssembleeNationale.AssembleeNationale(
-    database=os.getenv("POSTGRESQL_ADDON_DB"),
-    userDatabase = os.getenv("POSTGRESQL_ADDON_USER"),
-    passwordDatabase = os.getenv("POSTGRESQL_ADDON_PASSWORD"),
-    hostDatabase = os.getenv("POSTGRESQL_ADDON_HOST"),
-    portDatabase = os.getenv("POSTGRESQL_ADDON_PORT"),
-    verbose=2, 
-    setup=False)
-
-# Local
-"""assembleeNationale = AssembleeNationale.AssembleeNationale(
-    database='postgres',
-    userDatabase='postgres',
-    passwordDatabase='password',
-    hostDatabase='localhost',
-    portDatabase='5432',
-    verbose=2,
-    setup=True)"""
+if os.getenv("POSTGRESQL_ADDON_DB") is not None:
+    # Clever cloud
+    assembleeNationale = AssembleeNationale.AssembleeNationale(
+        database=os.getenv("POSTGRESQL_ADDON_DB"),
+        userDatabase = os.getenv("POSTGRESQL_ADDON_USER"),
+        passwordDatabase = os.getenv("POSTGRESQL_ADDON_PASSWORD"),
+        hostDatabase = os.getenv("POSTGRESQL_ADDON_HOST"),
+        portDatabase = os.getenv("POSTGRESQL_ADDON_PORT"),
+        verbose=2, 
+        setup=False)
+else:
+    # Local
+    assembleeNationale = AssembleeNationale.AssembleeNationale(
+        database='postgres',
+        userDatabase='postgres',
+        passwordDatabase='password',
+        hostDatabase='localhost',
+        portDatabase='5432',
+        verbose=2,
+        setup=False)
 
 
 @app.route("/api/test")
