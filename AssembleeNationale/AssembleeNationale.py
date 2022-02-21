@@ -28,7 +28,7 @@ class AssembleeNationale:
         self.__sourceList = {
             "DOSSIERS_LEGISLATIFS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/dossiers_legislatifs/Dossiers_Legislatifs_XV.json.zip", "pollingFrequency": 1000000},
             "AGENDA": {"link": "http://data.assemblee-nationale.fr/static/openData/repository/15/vp/seances/seances_publique_excel.csv", "pollingFrequency": 1000000},
-            #"AMENDEMENTS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/amendements_legis/Amendements_XV.json.zip", "pollingFrequency": 1000000},
+            "AMENDEMENTS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/amendements_legis/Amendements_XV.json.zip", "pollingFrequency": 1000000},
             "DEBATS_EN_SEANCE_PUBLIQUE": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/vp/syceronbrut/syseron.xml.zip", "pollingFrequency": 1000000},
             "VOTES": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/scrutins/Scrutins_XV.json.zip", "pollingFrequency": 1000000},
             "QUESTIONS_AU_GOUVERNEMENT": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_gouvernement/Questions_gouvernement_XV.json.zip", "pollingFrequency": 100000},
@@ -109,7 +109,7 @@ class AssembleeNationale:
         self.__tableList = {
             "DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
             "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE": self.__dossierLegislatifDossierParlementaireTableDefinition,
-            #"AMENDEMENT": self.__amendementTableDefinition,
+            "AMENDEMENT": self.__amendementTableDefinition,
             "QUESTIONS_ECRITES": self.__questionEcriteTableDefinition,
         }
 
@@ -506,6 +506,7 @@ class AssembleeNationale:
 
         ret = {}
         ret["listOfDossiersLegislatifs"] = []
+        ret["listOfQuestionsEcrites"] = []
         ret["count"] = 0
 
         # First get the radicals (use for highlight in react)
@@ -516,7 +517,7 @@ class AssembleeNationale:
         except:
             traceback.print_exc()
 
-        # Then get the results
+        # Then get the results for document legislatifs
         tableDef = self.__dossierLegislatifDocumentTableDefinition
         query = "SELECT "
         for key in tableDef["schema"].keys():
@@ -589,7 +590,7 @@ class AssembleeNationale:
         except:
             traceback.print_exc()
 
-        ret["count"] = count
+        ret["count"] += count
         ret["listOfDossiersLegislatifs"].extend(
             self.__sortDossierLegislatifsUid(wordAdjacentListOfDossiersLegislatifs))
         ret["listOfDossiersLegislatifs"].extend(
@@ -597,6 +598,43 @@ class AssembleeNationale:
         ret["listOfDossiersLegislatifs"].extend(
             self.__sortDossierLegislatifsUid(wordORListOfDossiersLegislatifs))
         ret["listOfDossiersLegislatifs"] = ret["listOfDossiersLegislatifs"][:maxNumberOfResults]
+
+        # ------------------------------------------------------
+        # Then get the results for questions écrites
+        tableDef = self.__questionEcriteTableDefinition
+        query = "SELECT "
+        for key in tableDef["schema"].keys():
+            query += key + ","
+        query = query[:-1]
+        query += " FROM QUESTIONS_ECRITES WHERE ts @@ to_tsquery('french',%s);"
+
+        count = 0
+
+        # First try by the words adjacent
+        wordAdjacentListOfQuestionsEcrites = []
+        processedQueryLogic = processedQuery.replace(" ", "<1>")
+        try:
+            cursor.execute(query, (processedQueryLogic,))
+            for entry in cursor.fetchall():
+                count += 1
+                entryData = {}
+                listOfColumn = list(
+                    tableDef["schema"].keys())
+                for i in range(len(entry)):
+                    if type(entry[i]) == datetime.datetime:
+                        entryData[listOfColumn[i]] = str(entry[i])
+                    else:
+                        entryData[listOfColumn[i]] = entry[i]
+                if entryData["uid"] not in wordAdjacentListOfQuestionsEcrites:
+                    wordAdjacentListOfQuestionsEcrites.append(
+                        entryData["uid"])
+        except:
+            traceback.print_exc()
+
+        ret["count"] += count
+        ret["listOfQuestionsEcrites"].extend(wordAdjacentListOfQuestionsEcrites)
+        ret["listOfQuestionsEcrites"] = ret["listOfQuestionsEcrites"][:maxNumberOfResults]
+
         connection.close()
         return json.dumps(ret)
 
