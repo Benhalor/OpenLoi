@@ -14,7 +14,7 @@ if os.getenv("POSTGRESQL_ADDON_DB") is not None:
         hostDatabase = os.getenv("POSTGRESQL_ADDON_HOST"),
         portDatabase = os.getenv("POSTGRESQL_ADDON_PORT"),
         verbose=2, 
-        setup=False)
+        setup=True)
 else:
     # Local
     assembleeNationale = AssembleeNationale.AssembleeNationale(
