@@ -16,14 +16,14 @@ class MyServer(BaseHTTPRequestHandler):
         self.wfile.write(bytes("<p>This page is useless</p>", "utf-8"))
         self.wfile.write(bytes("</body></html>", "utf-8"))
 
-if __name__ == "__main__":        
-    webServer = HTTPServer((hostName, serverPort), MyServer)
-    print("Server started http://%s:%s" % (hostName, serverPort))
 
-    try:
-        webServer.serve_forever()
-    except KeyboardInterrupt:
-        pass
+webServer = HTTPServer((hostName, serverPort), MyServer)
+print("Server started http://%s:%s" % (hostName, serverPort))
 
-    webServer.server_close()
-    print("Server stopped.")
+try:
+    webServer.serve_forever()
+except KeyboardInterrupt:
+    pass
+
+webServer.server_close()
+print("Server stopped.")
