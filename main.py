@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 sys.path.append('AssembleeNationale')
 import AssembleeNationale
@@ -25,9 +26,13 @@ assembleeNationale = AssembleeNationale.AssembleeNationale(
     verbose=2,
     setup=True)"""
 
-r = assembleeNationale.downloadSources("AssembleeNationale/data/")
-assembleeNationale.processSources(
-    "AssembleeNationale/data/", r["updatedSources"])
+while True:
+    r = assembleeNationale.downloadSources("AssembleeNationale/data/")
+    assembleeNationale.processSources(
+        "AssembleeNationale/data/", r["updatedSources"])
+    time.sleep(3600)
+
+# Tests      
 print(assembleeNationale.search("test"))
 print(assembleeNationale.getDossierLegislatifByUid("DLR5L15N37471"))
 assembleeNationale.getDossierLegislatifdocumentsByUid("PIONANR5L15B3619")
