@@ -50,7 +50,7 @@ def helloWord():
 def getSearchResults(query):
     if request.method == 'GET':
         ret = assembleeNationale.search(query)
-        print(ret)
+        #print(ret)
         return ret
 
     else:
@@ -61,7 +61,7 @@ def getSearchResults(query):
 def getLastNews():
     if request.method == 'GET':
         ret = assembleeNationale.getLastNews()
-        print(ret)
+        #print(ret)
         return ret
 
     else:
@@ -72,7 +72,7 @@ def getLastNews():
 def getDocumentsDossierLegislatif(uid):
     if request.method == 'GET':
         ret = assembleeNationale.getDossierLegislatifdocumentsByUid(uid)
-        print(ret)
+        #print(ret)
         return ret
 
     else:
@@ -83,7 +83,7 @@ def getDocumentsDossierLegislatif(uid):
 def getDocumentById(uid):
     if request.method == 'GET':
         ret = assembleeNationale.getDocumentByUid(uid)
-        print(ret)
+        #print(ret)
         return ret
 
     else:
@@ -94,7 +94,7 @@ def getDocumentById(uid):
 def getDossierLegislatif(uid):
     if request.method == 'GET':
         ret = assembleeNationale.getDossierLegislatifByUid(uid)
-        print(ret)
+        #print(ret)
         return ret
 
     else:
@@ -105,7 +105,7 @@ def getDossierLegislatif(uid):
 def getAmendements(uid):
     if request.method == 'GET':
         ret = assembleeNationale.getAmendementsByUid(uid)
-        print(ret)
+        #print(ret)
         return ret
 
     else:
@@ -116,7 +116,7 @@ def getAmendements(uid):
 def getAmendementsQuery(uid, query):
     if request.method == 'GET':
         ret = assembleeNationale.getAmendementsQuery(uid, query)
-        print(ret)
+        #print(ret)
         return ret
 
     else:
