@@ -73,19 +73,19 @@ class AssembleeNationale:
             "tableName": "AMENDEMENT",
             "source": "AN",
             "schema": {
-                "uid": {"path": "amendement:uid", "htmlEscape": False, "type": "VARCHAR ( 40 )", "search": True},
+                "uid": {"path": "amendement:uid", "htmlEscape": False, "type": "VARCHAR ( 40 ) PRIMARY KEY", "search": True},
                 "texteLegislatifRef": {"path": "amendement:texteLegislatifRef", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": True},
                 "signataires": {"path": "amendement:signataires:libelle", "htmlEscape": True, "type": "VARCHAR ( 20000 )", "search": True},
                 "dispositif": {"path": "amendement:corps:contenuAuteur:dispositif", "htmlEscape": True, "type": "VARCHAR ( 1000000 )", "search": True},
                 "exposeSommaire": {"path": "amendement:corps:contenuAuteur:exposeSommaire", "htmlEscape": True, "type": "VARCHAR ( 50000 )", "search": True},
                 "documentURI": {"path": "amendement:representations:representation:contenu:documentURI", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": True},
                 "dateDepot": {"path": "amendement:cycleDeVie:dateDepot", "htmlEscape": False, "type": "DATE", "search": False},
-                "etat": {"path": "amendement:cycleDeVie:etatDesTraitements:etat:libelle", "htmlEscape": True, "type": "VARCHAR ( 100 )", "search": True},
-                "sousEtat": {"path": "amendement:cycleDeVie:etatDesTraitements:sousEtat:libelle", "htmlEscape": True, "type": "VARCHAR ( 100 )", "search": True},
+                "etat": {"path": "amendement:cycleDeVie:etatDesTraitements:etat:libelle", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": True},
+                "sousEtat": {"path": "amendement:cycleDeVie:etatDesTraitements:sousEtat:libelle", "htmlEscape": True, "type": "VARCHAR ( 201 )", "search": True},
                 "dateSort": {"path": "amendement:cycleDeVie:dateSort", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
-                "sort": {"path": "amendement:cycleDeVie:sort", "htmlEscape": True, "type": "VARCHAR ( 100 )", "search": False},
-                "article": {"path": "amendement:pointeurFragmentTexte:division:articleDesignationCourte", "htmlEscape": True, "type": "VARCHAR ( 100 )", "search": False},
-                "alinea": {"path": "amendement:pointeurFragmentTexte:amendementStandard:alinea:alineaDesignation", "htmlEscape": True, "type": "VARCHAR ( 100 )", "search": False},
+                "sort": {"path": "amendement:cycleDeVie:sort", "htmlEscape": True, "type": "VARCHAR ( 202 )", "search": False},
+                "article": {"path": "amendement:pointeurFragmentTexte:division:articleDesignationCourte", "htmlEscape": True, "type": "VARCHAR ( 203 )", "search": False},
+                "alinea": {"path": "amendement:pointeurFragmentTexte:amendementStandard:alinea:alineaDesignation", "htmlEscape": True, "type": "VARCHAR ( 404 )", "search": False},
             }
         }
 
@@ -93,7 +93,7 @@ class AssembleeNationale:
             "tableName": "QUESTIONS_ECRITES",
             "source": "AN",
             "schema": {
-                "uid": {"path": "question:uid", "htmlEscape": False, "type": "VARCHAR ( 40 )", "search": True},
+                "uid": {"path": "question:uid", "htmlEscape": False, "type": "VARCHAR ( 40 ) PRIMARY KEY", "search": True},
                 "rubrique": {"path": "question:indexationAN:rubrique", "htmlEscape": True, "type": "VARCHAR ( 500 )", "search": True},
                 "resume": {"path": "question:indexationAN:ANALYSE:ANA", "htmlEscape": True, "type": "VARCHAR ( 2000 )", "search": True},
                 "auteur": {"path": "question:auteur:identite:acteurRef", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": False},
@@ -390,6 +390,7 @@ class AssembleeNationale:
                                 sys.exit(0)
                             except:
                                 print(path)
+                                print(query)
                                 traceback.print_exc()
                         except KeyboardInterrupt:
                             sys.exit(0)
@@ -443,11 +444,11 @@ class AssembleeNationale:
                         try:
                             docPath = docPath[pathIter]
                         except TypeError:
-                            pass
+                            docPath = None
                         except KeyboardInterrupt:
                             sys.exit(0)
                         except:
-                            pass
+                            docPath = None
                             # case value is null in json
 
                     if docPath is not None:
