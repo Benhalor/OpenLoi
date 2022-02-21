@@ -361,11 +361,26 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
         margin-left: 0.5rem;
         margin-right: 0.5rem;
     }
+
+    .enteteAmendement {
+        min-width: 55vw;
+        margin-right: 1rem;
+    }
   }
 
-  @media screen and (max-width: 900px) and (min-width: 601px){
+
+  @media screen and (max-width: 900px) and (min-width: 801px){
     html {
         font-size: 85%;
+    }
+    .App-body {
+        max-width: 85vw;
+    }
+  }
+
+  @media screen and (max-width: 1500px) and (min-width: 901px){
+    html {
+        font-size: 95%;
     }
     .App-body {
         max-width: 85vw;

@@ -85,6 +85,7 @@ class AssembleeNationale:
                 "dateSort": {"path": "amendement:cycleDeVie:dateSort", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
                 "sort": {"path": "amendement:cycleDeVie:sort", "htmlEscape": True, "type": "VARCHAR ( 202 )", "search": False},
                 "article": {"path": "amendement:pointeurFragmentTexte:division:articleDesignationCourte", "htmlEscape": True, "type": "VARCHAR ( 203 )", "search": False},
+                "urlDivisionTexteVise": {"path": "amendement:pointeurFragmentTexte:division:urlDivisionTexteVise", "htmlEscape": True, "type": "VARCHAR ( 600 )", "search": False},
                 "alinea": {"path": "amendement:pointeurFragmentTexte:amendementStandard:alinea:alineaDesignation", "htmlEscape": True, "type": "VARCHAR ( 404 )", "search": False},
             }
         }
@@ -112,9 +113,6 @@ class AssembleeNationale:
             "AMENDEMENT": self.__amendementTableDefinition,
             "QUESTIONS_ECRITES": self.__questionEcriteTableDefinition,
         }
-
-        
-
 
         self.__database = database
         self.__userDatabase = userDatabase
@@ -222,7 +220,7 @@ class AssembleeNationale:
             # Download file only if it is older than POLLING_FREQUENCY_S, (or not exists).
             if not(os.path.exists(dataName)) or time.time() - os.path.getmtime(dataName) > pollingFrequency:
                 self.__debugPrint("Start downloading " +
-                                dataName+"...", end="", level=1)
+                                  dataName+"...", end="", level=1)
                 sourceFile = requests.get(sourceLink, allow_redirects=True)
                 f = open(dataName, 'wb')
                 f.write(sourceFile.content)
@@ -359,7 +357,7 @@ class AssembleeNationale:
     def __uploadToDb(self, directory, table="DOSSIERS_LEGISLATIFS_DOCUMENT"):
         connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
                                       password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
-        connection.autocommit = True
+        connection.autocommit = False
         cursor = connection.cursor()
 
         if table in self.__tableList:
@@ -633,7 +631,8 @@ class AssembleeNationale:
             traceback.print_exc()
 
         ret["count"] += count
-        ret["listOfQuestionsEcrites"].extend(wordAdjacentListOfQuestionsEcrites)
+        ret["listOfQuestionsEcrites"].extend(
+            wordAdjacentListOfQuestionsEcrites)
         ret["listOfQuestionsEcrites"] = ret["listOfQuestionsEcrites"][:maxNumberOfResults]
 
         connection.close()
