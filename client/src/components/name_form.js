@@ -31,6 +31,7 @@ class NameForm extends React.Component {
       .then(
         (result) => {
           this.props.pullResults(result)
+          console.log(result)
 
         }
 
@@ -52,11 +53,8 @@ class NameForm extends React.Component {
   render() {
     return (
       <form onSubmit={this.handleSubmit} className="row align-items-center">
-        <label className="col-md-auto label-for-search">
-          Rechercher :
-        </label>
         <div className="col autocomplete">
-          <input type="search" className="autocomplete-input" value={this.state.userQuery} autoComplete="off" onChange={this.handleChange} placeholder="Ex: climat" />
+          <input type="search" className="autocomplete-input" value={this.state.userQuery} autoComplete="off" onChange={this.handleChange} placeholder="Rechercher" />
         </div>
       </form>
     );
