@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import json 
 
 sys.path.append("../AssembleeNationale")
@@ -104,8 +105,9 @@ def getDossierLegislatif(uid):
 @app.route("/api/amendements/<string:uid>", methods=['GET'])
 def getAmendements(uid):
     if request.method == 'GET':
+        lastTime = time.time()
         ret = assembleeNationale.getAmendementsByUid(uid)
-        #print(ret)
+        print("duration for getting "+ str(ret["numberOfAmendement"])+" amendements : "+str(time.time()-lastTime))
         return ret
 
     else:
