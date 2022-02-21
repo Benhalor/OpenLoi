@@ -6,7 +6,6 @@ class Amendement extends React.Component {
     constructor(props) {
         super(props);
         this.state = { displayAmendement: false };
-        console.log(this.props.data.dispositif)
     }
 
     changeDisplayAmendement() {
@@ -52,7 +51,7 @@ class Amendement extends React.Component {
                                 📝 {this.props.data.article} {this.props.data.alinea}  - déposé le {convertDate(this.props.data.dateDepot)} <span className="dossierStatus"> ▪ {this.extractStatus()}</span>
                             </div>
                             <div className="col left-align">
-                                <a className="btnAmendement" target="_blank" rel="noopener noreferrer" href={"https://www.assemblee-nationale.fr/" + this.props.data.urlDivisionTexteVise}>Voir ↗</a>
+                                <a className="btnAmendement" target="_blank" rel="noopener noreferrer" href={"https://www.assemblee-nationale.fr" + this.props.data.urlDivisionTexteVise}>Voir ↗</a>
                             </div>
 
                         </div>
