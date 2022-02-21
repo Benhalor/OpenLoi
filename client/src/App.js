@@ -25,17 +25,11 @@ class App extends React.Component {
               <img alt="Surveiller et trouver des textes de loi avec Open loi" src={logo} />
             </a>
 
-            <div className="col">
+              
               <div className="row justify-content-end">
-                <div className="col-auto">
-                  <a href="/apropos">À propos</a>
-                </div>
-                <div className="col-auto border-start">
-                  <a href="https://github.com/Benhalor/OpenLoi" target="_blank" rel="noopener noreferrer">Github</a>
-                </div>
+                  <a href="https://github.com/Benhalor/OpenLoi" target="_blank" rel="noopener noreferrer">Github ↗</a>
               </div>
-            </div>
-            
+
 
           </div>
         </div>

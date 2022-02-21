@@ -373,7 +373,7 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
     html {
         font-size: 85%;
     }
-    .App-body {
+    .App-body,.App-header  {
         max-width: 85vw;
     }
   }
@@ -382,7 +382,7 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
     html {
         font-size: 95%;
     }
-    .App-body {
+    .App-body,.App-header {
         max-width: 85vw;
     }
   }
@@ -397,4 +397,17 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
     border-width: 0px;  
     border-radius: 0.5rem;
     font-size: 1.2rem;
+  }
+
+  img {
+    width: 100%;
+    height: auto;
+    max-width:200px;
+    min-width:200px;
+  }
+
+
+  .logo-clever{
+      max-width:30px;
+      min-width:0px;
   }
