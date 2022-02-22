@@ -18,6 +18,10 @@ class App extends React.Component {
   render() {
     return (
       <div className="App">
+        <div className="App-warning">
+          /!\ OpenLoi est encore en construction. De nombreuses fonctionnalités ne sont pas implémentées. Si vous repérez un bug, merci  
+          <a href="https://github.com/Benhalor/OpenLoi/issues" target="_blank" rel="noopener noreferrer" >d'ouvrir une issue ↗</a>
+        </div>
         <div className="App-header">
           <div className="row align-items-center">
 
@@ -25,10 +29,10 @@ class App extends React.Component {
               <img alt="Surveiller et trouver des textes de loi avec Open loi" src={logo} />
             </a>
 
-              
-              <div className="row justify-content-end">
-                  <a href="https://github.com/Benhalor/OpenLoi" target="_blank" rel="noopener noreferrer">Github ↗</a>
-              </div>
+
+            <div className="row justify-content-end">
+              <a href="https://github.com/Benhalor/OpenLoi" target="_blank" rel="noopener noreferrer">Github ↗</a>
+            </div>
 
 
           </div>

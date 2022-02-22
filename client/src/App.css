@@ -411,3 +411,11 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
       max-width:30px;
       min-width:0px;
   }
+
+  .App-warning {
+    background-color:  rgb(85, 97, 217);
+    color: white;
+    padding: 1rem;
+    font-size: 1.2rem;
+    text-align: center;
+  }
