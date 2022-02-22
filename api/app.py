@@ -91,6 +91,19 @@ def getDocumentById(uid):
         # 405 Method Forbidden
         abort(405)
 
+
+
+@app.route("/api/questionEcrite/<string:uid>", methods=['GET'])
+def getQuestionEcrite(uid):
+    if request.method == 'GET':
+        ret = assembleeNationale.getQuestionEcriteByUid(uid)
+        #print(ret)
+        return ret
+
+    else:
+        # 405 Method Forbidden
+        abort(405)
+
 @app.route("/api/dossierLegislatif/<string:uid>", methods=['GET'])
 def getDossierLegislatif(uid):
     if request.method == 'GET':

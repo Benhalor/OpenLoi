@@ -387,9 +387,9 @@ class AssembleeNationale:
                             except KeyboardInterrupt:
                                 sys.exit(0)
                             except:
-                                print(path)
-                                print(query)
-                                traceback.print_exc()
+                                pass
+                                # print(path)
+                                # traceback.print_exc()
                         except KeyboardInterrupt:
                             sys.exit(0)
                         except:
@@ -516,87 +516,31 @@ class AssembleeNationale:
         except:
             traceback.print_exc()
 
+        # ------------------------------------------------------
         # Then get the results for document legislatifs
         tableDef = self.__dossierLegislatifDocumentTableDefinition
-        query = "SELECT "
-        for key in tableDef["schema"].keys():
-            query += key + ","
-        query = query[:-1]
-        query += " FROM DOSSIERS_LEGISLATIFS_DOCUMENT WHERE ts @@ to_tsquery('french',%s);"
-
+        query = "SELECT dossierRef,ts_rank_cd(ts, to_tsquery('french',%s),2) AS score FROM DOSSIERS_LEGISLATIFS_DOCUMENT WHERE ts @@ to_tsquery('french',%s) ORDER by score, dossierRef DESC LIMIT %s;"
         count = 0
 
-        # First try by the words adjacent
-        wordAdjacentListOfDossiersLegislatifs = []
-        processedQueryLogic = processedQuery.replace(" ", "<1>")
-        try:
-            cursor.execute(query, (processedQueryLogic,))
-            for entry in cursor.fetchall():
-                count += 1
-                entryData = {}
-                listOfColumn = list(
-                    tableDef["schema"].keys())
-                for i in range(len(entry)):
-                    if type(entry[i]) == datetime.datetime:
-                        entryData[listOfColumn[i]] = str(entry[i])
-                    else:
-                        entryData[listOfColumn[i]] = entry[i]
-                if entryData["dossierRef"] not in wordAdjacentListOfDossiersLegislatifs:
-                    wordAdjacentListOfDossiersLegislatifs.append(
-                        entryData["dossierRef"])
-        except:
-            traceback.print_exc()
-
-        # Then query with word anywhere in the document
-        wordAnywhereListOfDossiersLegislatifs = []
-        processedQueryLogic = processedQuery.replace(" ", "&")
-        try:
-            cursor.execute(query, (processedQueryLogic,))
-            for entry in cursor.fetchall():
-                count += 1
-                entryData = {}
-                listOfColumn = list(
-                    tableDef["schema"].keys())
-                for i in range(len(entry)):
-                    if type(entry[i]) == datetime.datetime:
-                        entryData[listOfColumn[i]] = str(entry[i])
-                    else:
-                        entryData[listOfColumn[i]] = entry[i]
-                if entryData["dossierRef"] not in wordAnywhereListOfDossiersLegislatifs + wordAdjacentListOfDossiersLegislatifs:
-                    wordAnywhereListOfDossiersLegislatifs.append(
-                        entryData["dossierRef"])
-        except:
-            traceback.print_exc()
-
-        # Then query with some of the words in the document
-        wordORListOfDossiersLegislatifs = []
+        ListOfDossiersLegislatifs = []
         processedQueryLogic = processedQuery.replace(" ", "|")
         try:
-            cursor.execute(query, (processedQueryLogic,))
+            cursor.execute(query, (processedQueryLogic,
+                           processedQueryLogic, maxNumberOfResults,))
             for entry in cursor.fetchall():
                 count += 1
                 entryData = {}
-                listOfColumn = list(
-                    tableDef["schema"].keys())
-                for i in range(len(entry)):
-                    if type(entry[i]) == datetime.datetime:
-                        entryData[listOfColumn[i]] = str(entry[i])
-                    else:
-                        entryData[listOfColumn[i]] = entry[i]
-                if entryData["dossierRef"] not in wordORListOfDossiersLegislatifs + wordAnywhereListOfDossiersLegislatifs + wordAdjacentListOfDossiersLegislatifs:
-                    wordORListOfDossiersLegislatifs.append(
-                        entryData["dossierRef"])
+                entryData["dossierRef"] = entry[0]
+                entryData["score"] = entry[1]
+                d = {"uid": entryData["dossierRef"],"score": entryData["score"]}
+                if not any(di['uid'] == entryData["dossierRef"]  for di in ListOfDossiersLegislatifs):
+                    ListOfDossiersLegislatifs.append(d)
+                        
         except:
             traceback.print_exc()
 
         ret["count"] += count
-        ret["listOfDossiersLegislatifs"].extend(
-            self.__sortDossierLegislatifsUid(wordAdjacentListOfDossiersLegislatifs))
-        ret["listOfDossiersLegislatifs"].extend(
-            self.__sortDossierLegislatifsUid(wordAnywhereListOfDossiersLegislatifs))
-        ret["listOfDossiersLegislatifs"].extend(
-            self.__sortDossierLegislatifsUid(wordORListOfDossiersLegislatifs))
-        ret["listOfDossiersLegislatifs"] = ret["listOfDossiersLegislatifs"][:maxNumberOfResults]
+        ret["listOfDossiersLegislatifs"].extend(ListOfDossiersLegislatifs)
 
         # ------------------------------------------------------
         # Then get the results for questions écrites
@@ -605,35 +549,45 @@ class AssembleeNationale:
         for key in tableDef["schema"].keys():
             query += key + ","
         query = query[:-1]
-        query += " FROM QUESTIONS_ECRITES WHERE ts @@ to_tsquery('french',%s);"
+        query += ",ts_rank_cd(ts, to_tsquery('french',%s),2) AS score FROM QUESTIONS_ECRITES WHERE  ts @@ to_tsquery('french',%s) ORDER by score DESC LIMIT %s;"
 
         count = 0
 
-        # First try by the words adjacent
-        wordAdjacentListOfQuestionsEcrites = []
-        processedQueryLogic = processedQuery.replace(" ", "<1>")
+        ListOfQuestionsEcrites = []
+        processedQueryLogic = processedQuery.replace(" ", "|")
         try:
-            cursor.execute(query, (processedQueryLogic,))
+            cursor.execute(query, (processedQueryLogic,
+                           processedQueryLogic, maxNumberOfResults,))
             for entry in cursor.fetchall():
                 count += 1
                 entryData = {}
                 listOfColumn = list(
                     tableDef["schema"].keys())
-                for i in range(len(entry)):
+                for i in range(len(entry)-1):
                     if type(entry[i]) == datetime.datetime:
                         entryData[listOfColumn[i]] = str(entry[i])
                     else:
                         entryData[listOfColumn[i]] = entry[i]
-                if entryData["uid"] not in wordAdjacentListOfQuestionsEcrites:
-                    wordAdjacentListOfQuestionsEcrites.append(
-                        entryData["uid"])
+                entryData["score"] = entry[i+1]
+                if entryData["uid"] not in ListOfQuestionsEcrites:
+                    ListOfQuestionsEcrites.append(
+                        {"uid": entryData["uid"], "score": entryData["score"]}
+                    )
         except:
             traceback.print_exc()
 
         ret["count"] += count
-        ret["listOfQuestionsEcrites"].extend(
-            wordAdjacentListOfQuestionsEcrites)
-        ret["listOfQuestionsEcrites"] = ret["listOfQuestionsEcrites"][:maxNumberOfResults]
+        ret["listOfQuestionsEcrites"].extend(ListOfQuestionsEcrites)
+        ret["listOfResults"] = []
+
+        for questionEcrite in ret["listOfQuestionsEcrites"]:
+            ret["listOfResults"].append({"type": "questionEcrite", "uid": questionEcrite["uid"], "score": questionEcrite["score"]})
+        for dossierLegislatif in ret["listOfDossiersLegislatifs"]:
+            ret["listOfResults"].append({"type": "dossierLegislatif", "uid": dossierLegislatif["uid"], "score": dossierLegislatif["score"]})
+
+        # Sort by score
+        ret["listOfResults"] = sorted(ret["listOfResults"], key=lambda d: d['score'], reverse=True) 
+        print(ret["listOfResults"])
 
         connection.close()
         return json.dumps(ret)
@@ -787,6 +741,40 @@ class AssembleeNationale:
             query += key + ","
         query = query[:-1]
         query += " FROM DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE WHERE uid=%s;"
+
+        try:
+            cursor.execute(query, (uid,))
+            entry = cursor.fetchone()
+            listOfColumn = list(
+                tableDef["schema"].keys())
+            for i in range(len(entry)):
+                ret[listOfColumn[i]] = entry[i]
+        except:
+            traceback.print_exc()
+        connection.close()
+        return ret
+
+    """getQuestionEcriteByUid
+				return a question ecrite by its uid
+				@params uid : uid of question ecrite
+				@return : json of the question
+
+	"""
+
+    def getQuestionEcriteByUid(self, uid):
+        connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
+                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection.autocommit = True
+        cursor = connection.cursor()
+
+        tableDef = self.__questionEcriteTableDefinition
+
+        ret = {}
+        query = "SELECT "
+        for key in tableDef["schema"].keys():
+            query += key + ","
+        query = query[:-1]
+        query += " FROM QUESTIONS_ECRITES WHERE uid=%s;"
 
         try:
             cursor.execute(query, (uid,))

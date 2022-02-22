@@ -19,8 +19,8 @@ class App extends React.Component {
     return (
       <div className="App">
         <div className="App-warning">
-          /!\ OpenLoi est encore en construction. De nombreuses fonctionnalités ne sont pas implémentées. Si vous repérez un bug, merci  
-          <a href="https://github.com/Benhalor/OpenLoi/issues" target="_blank" rel="noopener noreferrer" >d'ouvrir une issue ↗</a>
+          /!\ Ce projet est encore en construction. De nombreuses fonctionnalités ne sont pas implémentées. Si vous repérez un bug, merci  
+          <a href="https://github.com/Benhalor/OpenLoi/issues" target="_blank" rel="noopener noreferrer" > d'ouvrir une issue </a>
         </div>
         <div className="App-header">
           <div className="row align-items-center">
