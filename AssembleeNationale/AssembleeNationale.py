@@ -142,7 +142,7 @@ class AssembleeNationale:
         }
 
         self.__tableList = {
-            "QUESTIONS_AU_GOUVERNEMENT":self.__questionAuGouvernementTableDefinition,
+            "QUESTIONS_AU_GOUVERNEMENT": self.__questionAuGouvernementTableDefinition,
             "QUESTIONS_ORALES_SANS_DEBAT": self.__questionOraleSansDebatTableDefinition,
             "DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
             "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE": self.__dossierLegislatifDossierParlementaireTableDefinition,
@@ -186,7 +186,7 @@ class AssembleeNationale:
             except:
                 traceback.print_exc()
                 pass
-            
+
             # Create table
             try:
                 query = "CREATE TABLE "+tableDef["tableName"]+"("
@@ -218,7 +218,7 @@ class AssembleeNationale:
                 cursor.execute(query)
             except:
                 traceback.print_exc()
-            
+
             # For performance only
             """try:
                 query = "CREATE INDEX ts_idx ON " + \
@@ -379,7 +379,8 @@ class AssembleeNationale:
                 directoryToExtract+"/json", table="QUESTIONS_AU_GOUVERNEMENT")
             print("json QUESTIONS_AU_GOUVERNEMENT OK:"+str(self.__jsonReadOK))
             print("json QUESTIONS_AU_GOUVERNEMENT NOK:"+str(self.__jsonReadNOK))
-            print("Upload QUESTIONS_AU_GOUVERNEMENT in "+str(time.time()-lastTime))
+            print("Upload QUESTIONS_AU_GOUVERNEMENT in " +
+                  str(time.time()-lastTime))
         elif sourceName == "QUESTIONS_ORALES_SANS_DEBAT":
             lastTime = time.time()
             self.__jsonReadOK = 0
@@ -444,7 +445,7 @@ class AssembleeNationale:
                                 sys.exit(0)
                             except:
                                 pass
-                                #traceback.print_exc()
+                                # traceback.print_exc()
                         except KeyboardInterrupt:
                             sys.exit(0)
                         except:
@@ -484,7 +485,7 @@ class AssembleeNationale:
                     valuesString += "TO_DATE(\'"+date+"\' , \'DD/MM/YYYY\'),"
             elif "QUESTION" in tableDef["tableName"] and columnName == "dateQuestion":
                 # Sometimes there are multiple question in a list. In this case, take the last date. Moreover, date format is not standard
-                if "textesQuestion" in doc["question"].keys() :
+                if "textesQuestion" in doc["question"].keys():
                     if type(doc["question"]["textesQuestion"]["texteQuestion"]) is list:
                         date = doc["question"]["textesQuestion"]["texteQuestion"][-1]["infoJO"]["dateJO"]
                     else:
@@ -564,6 +565,7 @@ class AssembleeNationale:
         ret["listOfQuestionsEcrites"] = []
         ret["listOfQuestionsOralesSansDebat"] = []
         ret["listOfQuestionsAuGouvernement"] = []
+        ret["listOfResults"] = []
         ret["count"] = 0
 
         # First get the radicals (use for highlight in react)
@@ -574,7 +576,7 @@ class AssembleeNationale:
         except:
             traceback.print_exc()
 
-        processedQueryLogic = processedQuery.replace(" ", "|")
+        processedQueryLogic = processedQuery.replace(" ", "<1>")
 
         # ------------------------------------------------------
         # Then get the results for document legislatifs
@@ -593,53 +595,106 @@ class AssembleeNationale:
 
         # ------------------------------------------------------
         # Then get the results for questions orales sans debat
-        count, listOfQuestionsEcrites = self.__listOfQuestionsSearch(
+        count, listOfQuestionsOralesSansDebat = self.__listOfQuestionsSearch(
             cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, "QUESTIONS_ORALES_SANS_DEBAT")
         ret["count"] += count
-        ret["listOfQuestionsOralesSansDebat"].extend(listOfQuestionsEcrites)
+        ret["listOfQuestionsOralesSansDebat"].extend(
+            listOfQuestionsOralesSansDebat)
 
         # ------------------------------------------------------
         # Then get the results for questions au gouvernement (avec debat)
         count, listOfQuestionsAuGouvernement = self.__listOfQuestionsSearch(
             cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, "QUESTIONS_AU_GOUVERNEMENT")
         ret["count"] += count
-        ret["listOfQuestionsAuGouvernement"].extend(listOfQuestionsAuGouvernement)
+        ret["listOfQuestionsAuGouvernement"].extend(
+            listOfQuestionsAuGouvernement)
 
-
-
+        tempResult = []
         # Gather all results and give them a type key.
-        ret["listOfResults"] = []
-
-        for questionEcrite in ret["listOfQuestionsEcrites"]:
-            ret["listOfResults"].append(
+        for questionEcrite in listOfQuestionsEcrites:
+            tempResult.append(
                 {"type": "questionEcrite", "uid": questionEcrite["uid"], "score": questionEcrite["score"]})
-        for questionOraleSansDebat in ret["listOfQuestionsOralesSansDebat"]:
-            ret["listOfResults"].append(
+        for questionOraleSansDebat in listOfQuestionsOralesSansDebat:
+            tempResult.append(
                 {"type": "questionOraleSansDebat", "uid": questionOraleSansDebat["uid"], "score": questionOraleSansDebat["score"]})
-        for dossierLegislatif in ret["listOfDossiersLegislatifs"]:
-            ret["listOfResults"].append(
+        for dossierLegislatif in listOfdossierLegislatif:
+            tempResult.append(
                 {"type": "dossierLegislatif", "uid": dossierLegislatif["uid"], "score": dossierLegislatif["score"]})
-        for questionAuGouvernement in ret["listOfQuestionsAuGouvernement"]:
-            ret["listOfResults"].append(
+        for questionAuGouvernement in listOfQuestionsAuGouvernement:
+            tempResult.append(
                 {"type": "questionAuGouvernement", "uid": questionAuGouvernement["uid"], "score": questionAuGouvernement["score"]})
 
-        # Sort by score
-        ret["listOfResults"] = sorted(
-            ret["listOfResults"], key=lambda d: d['score'], reverse=True)
+        # Sort by score and extend list of results
+        tempResult = sorted(
+            tempResult, key=lambda d: d['score'], reverse=True)
+        ret["listOfResults"].extend(tempResult)
 
-        print(ret)
+        if count < maxNumberOfResults:
+            processedQueryLogic = processedQuery.replace(" ", "|")
+
+            # ------------------------------------------------------
+            # Then get the results for document legislatifs
+            count, listOfdossierLegislatif = self.__documentLegislatifSearch(
+                cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, "DOSSIERS_LEGISLATIFS_DOCUMENT", initialList=ret["listOfResults"])
+
+            ret["count"] += count
+            ret["listOfDossiersLegislatifs"].extend(listOfdossierLegislatif)
+
+            # ------------------------------------------------------
+            # Then get the results for questions écrites
+            count, listOfQuestionsEcrites = self.__listOfQuestionsSearch(
+                cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, "QUESTIONS_ECRITES", initialList=ret["listOfResults"])
+            ret["count"] += count
+            ret["listOfQuestionsEcrites"].extend(listOfQuestionsEcrites)
+
+            # ------------------------------------------------------
+            # Then get the results for questions orales sans debat
+            count, listOfQuestionsOralesSansDebat = self.__listOfQuestionsSearch(
+                cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, "QUESTIONS_ORALES_SANS_DEBAT", initialList=ret["listOfResults"])
+            ret["count"] += count
+            ret["listOfQuestionsOralesSansDebat"].extend(
+                listOfQuestionsOralesSansDebat)
+
+            # ------------------------------------------------------
+            # Then get the results for questions au gouvernement (avec debat)
+            count, listOfQuestionsAuGouvernement = self.__listOfQuestionsSearch(
+                cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, "QUESTIONS_AU_GOUVERNEMENT", initialList=ret["listOfResults"])
+            ret["count"] += count
+            ret["listOfQuestionsAuGouvernement"].extend(
+                listOfQuestionsAuGouvernement)
+
+            tempResult = []
+            # Gather all results and give them a type key.
+            for questionEcrite in listOfQuestionsEcrites:
+                tempResult.append(
+                    {"type": "questionEcrite", "uid": questionEcrite["uid"], "score": questionEcrite["score"]})
+            for questionOraleSansDebat in listOfQuestionsOralesSansDebat:
+                tempResult.append(
+                    {"type": "questionOraleSansDebat", "uid": questionOraleSansDebat["uid"], "score": questionOraleSansDebat["score"]})
+            for dossierLegislatif in listOfdossierLegislatif:
+                tempResult.append(
+                    {"type": "dossierLegislatif", "uid": dossierLegislatif["uid"], "score": dossierLegislatif["score"]})
+            for questionAuGouvernement in listOfQuestionsAuGouvernement:
+                tempResult.append(
+                    {"type": "questionAuGouvernement", "uid": questionAuGouvernement["uid"], "score": questionAuGouvernement["score"]})
+
+            # Sort by score and extend list of results
+            tempResult = sorted(
+                tempResult, key=lambda d: d['score'], reverse=True)
+            ret["listOfResults"].extend(tempResult)
+
         connection.close()
         return json.dumps(ret)
 
-
-    """__documentLegislatifSearchuid
+    """__documentLegislatifSearch
 				Generate a list of question containing a given query
 
 	"""
-    def __documentLegislatifSearch(self, cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, tableName):
+
+    def __documentLegislatifSearch(self, cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, tableName, initialList=[]):
 
         query = "SELECT dossierRef,ts_rank_cd(ts, to_tsquery('french',%s),2) AS score,dateDepot " \
-            "FROM "+ tableName +" "\
+            "FROM " + tableName + " "\
             "WHERE ( ts @@ to_tsquery('french',%s)" \
             ")" \
             "ORDER by score  DESC LIMIT %s;"
@@ -657,38 +712,38 @@ class AssembleeNationale:
                 entryData["score"] = entry[1]
                 d = {"uid": entryData["dossierRef"],
                      "score": entryData["score"]}
-                if not any(di['uid'] == entryData["dossierRef"] for di in listOfdossierLegislatif):
+                if not any(di['uid'] == entryData["dossierRef"] for di in listOfdossierLegislatif+initialList):
                     listOfdossierLegislatif.append(d)
 
         except:
             traceback.print_exc()
-
         return count, listOfdossierLegislatif
 
     """__listOfQuestionsSearch
 				Generate a list of question containing a given query
 
 	"""
-    def __listOfQuestionsSearch(self, cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, tableName):
-        
+
+    def __listOfQuestionsSearch(self, cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, tableName, initialList=[]):
+
         listOfQuestions = []
         count = 0
-        
+
         query = "SELECT uid ,ts_rank_cd(ts, to_tsquery('french',%s),2) AS score, dateQuestion, dateReponse " \
-            "FROM "+ tableName +" "\
+            "FROM " + tableName + " "\
             "WHERE ( ts @@ to_tsquery('french',%s)" \
             "AND ( (dateQuestion >  CURRENT_DATE - INTERVAL '%s months') OR (dateReponse >  CURRENT_DATE - INTERVAL '%s months') ))" \
             "ORDER by score DESC LIMIT %s;"
-        
+
         try:
             cursor.execute(query, (processedQueryLogic,
-                                   processedQueryLogic,numberOfMonthsOld, numberOfMonthsOld,  maxNumberOfResults,))
+                                   processedQueryLogic, numberOfMonthsOld, numberOfMonthsOld,  maxNumberOfResults,))
             for entry in cursor.fetchall():
                 count += 1
                 entryData = {}
                 entryData["uid"] = entry[0]
                 entryData["score"] = entry[1]
-                if entryData["uid"] not in listOfQuestions:
+                if not any(di['uid'] == entryData["uid"] for di in listOfQuestions+initialList):
                     listOfQuestions.append(
                         {"uid": entryData["uid"], "score": entryData["score"]}
                     )
