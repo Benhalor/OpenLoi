@@ -30,7 +30,7 @@ class App extends React.Component {
             </a>
 
 
-            <div className="row justify-content-end">
+            <div className="row justify-content-end githubLink">
               <a href="https://github.com/Benhalor/OpenLoi" target="_blank" rel="noopener noreferrer">Github ↗</a>
             </div>
 

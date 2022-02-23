@@ -348,6 +348,9 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
     .App-body {
         max-width: 100vw;
     }
+    .App-header {
+        max-width: 100vw;
+    }
     .text-column {
         padding-right: 1rem;
         min-width: 60vw;
@@ -365,6 +368,9 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
     .enteteAmendement {
         min-width: 55vw;
         margin-right: 1rem;
+    }
+    .githubLink {
+        display: none;
     }
   }
 

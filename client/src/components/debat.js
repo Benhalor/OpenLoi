@@ -58,7 +58,7 @@ class Debat extends React.Component {
                         <div className="titleSubResultBloc cursor" onClick={this.changedisplayDebat.bind(this)}>
                             {(this.state.displayDebat && this.state.debat.dateReponse !== null) && "➖"}
                             {(!this.state.displayDebat && this.state.debat.dateReponse !== null) && "➕"}
-                            {(this.state.debat.displayDebat === null) && "⏱"} Réponse du {this.state.debat.ministere}
+                            {(this.state.debat.displayDebat === null) && "⏱"} Avec le {this.state.debat.ministere}
                             <span className="dossierStatus">{this.state.debat.dateReponse !== null ?
                                 "▪ Le " + convertDate(this.state.debat.dateReponse)
                                 : "En attente de débat"
