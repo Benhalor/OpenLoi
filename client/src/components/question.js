@@ -27,6 +27,8 @@ class Question extends React.Component {
             apiTag = 'questionEcrite'
         } else if (questionType === "questionOraleSansDebat") {
             apiTag = 'questionOraleSansDebat'
+        } else if (questionType === "questionAuGouvernement") {
+            apiTag = 'questionAuGouvernement'
         }
 
         fetch(config.apiUrl + apiTag + "/" + uid)

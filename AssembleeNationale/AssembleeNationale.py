@@ -32,7 +32,7 @@ class AssembleeNationale:
             "VOTES": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/scrutins/Scrutins_XV.json.zip", "pollingFrequency": 1000000},
             "QUESTIONS_AU_GOUVERNEMENT": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_gouvernement/Questions_gouvernement_XV.json.zip", "pollingFrequency": 100000},
             "QUESTIONS_ORALES_SANS_DEBAT": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_orales_sans_debat/Questions_orales_sans_debat_XV.json.zip", "pollingFrequency": 100000},
-            "QUESTIONS_ECRITES": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_ecrites/Questions_ecrites_XV.json.zip", "pollingFrequency": 1000},
+            "QUESTIONS_ECRITES": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_ecrites/Questions_ecrites_XV.json.zip", "pollingFrequency": 10000},
             "REUNIONS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/vp/reunions/Agenda_XV.json.zip", "pollingFrequency": 1000000},
             "AMENDEMENTS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/amendements_legis/Amendements_XV.json.zip", "pollingFrequency": 1000000},
 
@@ -124,7 +124,25 @@ class AssembleeNationale:
             }
         }
 
+        self.__questionAuGouvernementTableDefinition = {
+            "tableName": "QUESTIONS_AU_GOUVERNEMENT",
+            "source": "AN",
+            "schema": {
+                "uid": {"path": "question:uid", "htmlEscape": False, "type": "VARCHAR ( 40 ) PRIMARY KEY", "search": True},
+                "rubrique": {"path": "question:indexationAN:rubrique", "htmlEscape": True, "type": "VARCHAR ( 500 )", "search": True},
+                "resume": {"path": "question:indexationAN:ANALYSE:ANA", "htmlEscape": True, "type": "VARCHAR ( 2000 )", "search": True},
+                "auteur": {"path": "question:auteur:identite:acteurRef", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": False},
+                "auteurGroupe": {"path": "question:auteur:groupe:developpe", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": False},
+                "ministere": {"path": "question:minInt:developpe", "htmlEscape": True, "type": "VARCHAR ( 1000 )", "search": True},
+                "question": {"path": "question:textesQuestion", "htmlEscape": True, "type": "VARCHAR ( 200000 )", "search": True},
+                "reponse": {"path": "question:textesReponse", "htmlEscape": True, "type": "VARCHAR ( 200000 )", "search": True},
+                "dateQuestion": {"path": "specialHandling...", "htmlEscape": False, "type": "DATE", "search": False},
+                "dateReponse": {"path": "specialHandling...", "htmlEscape": False, "type": "DATE", "search": False}
+            }
+        }
+
         self.__tableList = {
+            "QUESTIONS_AU_GOUVERNEMENT":self.__questionAuGouvernementTableDefinition,
             "QUESTIONS_ORALES_SANS_DEBAT": self.__questionOraleSansDebatTableDefinition,
             "DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
             "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE": self.__dossierLegislatifDossierParlementaireTableDefinition,
@@ -166,8 +184,10 @@ class AssembleeNationale:
                 cursor.execute(query)
                 print("Table "+tableDef["tableName"]+" drop successfully...")
             except:
+                traceback.print_exc()
                 pass
-
+            
+            # Create table
             try:
                 query = "CREATE TABLE "+tableDef["tableName"]+"("
                 columnString = ""
@@ -180,6 +200,8 @@ class AssembleeNationale:
                       " created successfully...")
             except psycopg2.errors.DuplicateTable:
                 print("Table "+tableDef["tableName"]+" already exists")
+            except:
+                traceback.print_exc()
 
             # Create searching index
             try:
@@ -189,19 +211,21 @@ class AssembleeNationale:
                 columnString = ""
                 for columnName, columnDef in tableDef["schema"].items():
                     if (columnDef["search"]):
-                        columnString += columnName + "|| ' ' ||"
-                columnString = columnString[:-9]
+                        columnString += "coalesce("+columnName+",'') ||"
+                columnString = columnString[:-2]
                 query += columnString
                 query += ")) STORED;"
                 cursor.execute(query)
             except:
-                pass
-            try:
+                traceback.print_exc()
+            
+            # For performance only
+            """try:
                 query = "CREATE INDEX ts_idx ON " + \
                     tableDef["tableName"] + " USING GIN (ts);"
                 cursor.execute(query)
             except:
-                pass
+                traceback.print_exc()"""
 
         connection.close()
 
@@ -348,7 +372,14 @@ class AssembleeNationale:
         elif sourceName == "VOTES":
             pass
         elif sourceName == "QUESTIONS_AU_GOUVERNEMENT":
-            pass
+            lastTime = time.time()
+            self.__jsonReadOK = 0
+            self.__jsonReadNOK = 0
+            self.__uploadToDb(
+                directoryToExtract+"/json", table="QUESTIONS_AU_GOUVERNEMENT")
+            print("json QUESTIONS_AU_GOUVERNEMENT OK:"+str(self.__jsonReadOK))
+            print("json QUESTIONS_AU_GOUVERNEMENT NOK:"+str(self.__jsonReadNOK))
+            print("Upload QUESTIONS_AU_GOUVERNEMENT in "+str(time.time()-lastTime))
         elif sourceName == "QUESTIONS_ORALES_SANS_DEBAT":
             lastTime = time.time()
             self.__jsonReadOK = 0
@@ -413,8 +444,7 @@ class AssembleeNationale:
                                 sys.exit(0)
                             except:
                                 pass
-                                # print(path)
-                                # traceback.print_exc()
+                                #traceback.print_exc()
                         except KeyboardInterrupt:
                             sys.exit(0)
                         except:
@@ -454,12 +484,13 @@ class AssembleeNationale:
                     valuesString += "TO_DATE(\'"+date+"\' , \'DD/MM/YYYY\'),"
             elif "QUESTION" in tableDef["tableName"] and columnName == "dateQuestion":
                 # Sometimes there are multiple question in a list. In this case, take the last date. Moreover, date format is not standard
-                if type(doc["question"]["textesQuestion"]["texteQuestion"]) is list:
-                    date = doc["question"]["textesQuestion"]["texteQuestion"][-1]["infoJO"]["dateJO"]
-                else:
-                    date = doc["question"]["textesQuestion"]["texteQuestion"]["infoJO"]["dateJO"]
-                columnString += columnName+","
-                valuesString += "TO_DATE(\'"+date+"\' , \'DD/MM/YYYY\'),"
+                if "textesQuestion" in doc["question"].keys() :
+                    if type(doc["question"]["textesQuestion"]["texteQuestion"]) is list:
+                        date = doc["question"]["textesQuestion"]["texteQuestion"][-1]["infoJO"]["dateJO"]
+                    else:
+                        date = doc["question"]["textesQuestion"]["texteQuestion"]["infoJO"]["dateJO"]
+                    columnString += columnName+","
+                    valuesString += "TO_DATE(\'"+date+"\' , \'DD/MM/YYYY\'),"
             else:
                 try:
                     docPath = doc
@@ -532,6 +563,7 @@ class AssembleeNationale:
         ret["listOfDossiersLegislatifs"] = []
         ret["listOfQuestionsEcrites"] = []
         ret["listOfQuestionsOralesSansDebat"] = []
+        ret["listOfQuestionsAuGouvernement"] = []
         ret["count"] = 0
 
         # First get the radicals (use for highlight in react)
@@ -566,6 +598,13 @@ class AssembleeNationale:
         ret["count"] += count
         ret["listOfQuestionsOralesSansDebat"].extend(listOfQuestionsEcrites)
 
+        # ------------------------------------------------------
+        # Then get the results for questions au gouvernement (avec debat)
+        count, listOfQuestionsAuGouvernement = self.__listOfQuestionsSearch(
+            cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, "QUESTIONS_AU_GOUVERNEMENT")
+        ret["count"] += count
+        ret["listOfQuestionsAuGouvernement"].extend(listOfQuestionsAuGouvernement)
+
 
 
         # Gather all results and give them a type key.
@@ -580,16 +619,20 @@ class AssembleeNationale:
         for dossierLegislatif in ret["listOfDossiersLegislatifs"]:
             ret["listOfResults"].append(
                 {"type": "dossierLegislatif", "uid": dossierLegislatif["uid"], "score": dossierLegislatif["score"]})
+        for questionAuGouvernement in ret["listOfQuestionsAuGouvernement"]:
+            ret["listOfResults"].append(
+                {"type": "questionAuGouvernement", "uid": questionAuGouvernement["uid"], "score": questionAuGouvernement["score"]})
 
         # Sort by score
         ret["listOfResults"] = sorted(
             ret["listOfResults"], key=lambda d: d['score'], reverse=True)
 
+        print(ret)
         connection.close()
         return json.dumps(ret)
 
 
-    """__documentLegislatifSearch
+    """__documentLegislatifSearchuid
 				Generate a list of question containing a given query
 
 	"""
@@ -627,24 +670,24 @@ class AssembleeNationale:
 
 	"""
     def __listOfQuestionsSearch(self, cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, tableName):
-
+        
         listOfQuestions = []
         count = 0
-
-        query = "SELECT uid, dateQuestion, dateReponse ,ts_rank_cd(ts, to_tsquery('french',%s),2) AS score " \
+        
+        query = "SELECT uid ,ts_rank_cd(ts, to_tsquery('french',%s),2) AS score, dateQuestion, dateReponse " \
             "FROM "+ tableName +" "\
             "WHERE ( ts @@ to_tsquery('french',%s)" \
             "AND ( (dateQuestion >  CURRENT_DATE - INTERVAL '%s months') OR (dateReponse >  CURRENT_DATE - INTERVAL '%s months') ))" \
             "ORDER by score DESC LIMIT %s;"
-
+        
         try:
             cursor.execute(query, (processedQueryLogic,
-                                   processedQueryLogic, numberOfMonthsOld, numberOfMonthsOld, maxNumberOfResults,))
+                                   processedQueryLogic,numberOfMonthsOld, numberOfMonthsOld,  maxNumberOfResults,))
             for entry in cursor.fetchall():
                 count += 1
                 entryData = {}
                 entryData["uid"] = entry[0]
-                entryData["score"] = entry[3]
+                entryData["score"] = entry[1]
                 if entryData["uid"] not in listOfQuestions:
                     listOfQuestions.append(
                         {"uid": entryData["uid"], "score": entryData["score"]}
@@ -837,6 +880,40 @@ class AssembleeNationale:
             query += key + ","
         query = query[:-1]
         query += " FROM QUESTIONS_ECRITES WHERE uid=%s;"
+
+        try:
+            cursor.execute(query, (uid,))
+            entry = cursor.fetchone()
+            listOfColumn = list(
+                tableDef["schema"].keys())
+            for i in range(len(entry)):
+                ret[listOfColumn[i]] = entry[i]
+        except:
+            traceback.print_exc()
+        connection.close()
+        return ret
+
+    """getQuestionAuGouvernementByUid
+				return a question au gouvernement (avec debat) by its uid
+				@params uid : uid of question ecrite
+				@return : json of the question
+
+	"""
+
+    def getQuestionAuGouvernementByUid(self, uid):
+        connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
+                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection.autocommit = True
+        cursor = connection.cursor()
+
+        tableDef = self.__questionAuGouvernementTableDefinition
+
+        ret = {}
+        query = "SELECT "
+        for key in tableDef["schema"].keys():
+            query += key + ","
+        query = query[:-1]
+        query += " FROM QUESTIONS_AU_GOUVERNEMENT WHERE uid=%s;"
 
         try:
             cursor.execute(query, (uid,))
