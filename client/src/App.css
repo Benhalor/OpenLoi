@@ -163,14 +163,14 @@ a {
 .titleSubResultBloc {
     display: flex;
     flex-direction: column;
-    padding: 2vh 3.2rem;
+    padding: 1.5vh 3rem;
     background: rgb(239, 241, 243);
     border:1px;
     text-align: center;
     margin-top : 0vh;
     border-top: 1px solid rgb(222, 226, 230) !important;
     border-bottom: 1px solid rgb(222, 226, 230) !important;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     text-align: left;
 }
 
