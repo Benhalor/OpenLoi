@@ -6,7 +6,7 @@
 
 | Version | Last Changelog | Ready? |
 | ------- | -------------- | ------ |
-| V0.1.0 | First beta release | ❌
+| V0.1.0 | First beta release | ✅
 
 
 
