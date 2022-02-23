@@ -83,7 +83,8 @@ class DossierLegislatif extends React.Component {
 
 
                             </div>
-                            <div className="row entete">
+                            <div className="row entete cursor" onClick={this.changeDisplayEtapes.bind(this)}>
+                            
                                 <Highlighter
                                     searchWords={this.props.query == "" ? [] : generateSearchWords(this.props.query)}
                                     sanitize={sanitizeWords}
@@ -112,9 +113,6 @@ class DossierLegislatif extends React.Component {
                         </div>
                     </div>
                     <div className="col">
-                        <div className="titleSubResultBloc cursor" onClick={this.changeDisplayEtapes.bind(this)}>
-                            {this.state.displayEtapes ? "➖" : "➕"} Élements du dossier 📖
-                        </div>
                         {this.state.displayEtapes && this.state.etapesLegislatives.map((data) => <EtapeLegislative key={data.uid} data={data} query={this.props.query} />)}
 
                     </div>

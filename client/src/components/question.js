@@ -86,8 +86,7 @@ class Question extends React.Component {
                         <div className="titleSubResultBloc cursor" onClick={this.changedisplayReponse.bind(this)}>
                             {(this.state.displayReponse && this.state.question.dateReponse !== null) && "➖"}
                             {(!this.state.displayReponse && this.state.question.dateReponse !== null) && "➕"}
-                            {(this.state.question.dateReponse === null) && "⏱"}
-                            Réponse du {this.state.question.ministere}
+                            {(this.state.question.dateReponse === null) && "⏱"} Réponse du {this.state.question.ministere}
                             <span className="dossierStatus">{this.state.question.dateReponse !== null ?
                                 "▪ Déposée le " + convertDate(this.state.question.dateReponse)
                                 : "En attente de réponse"

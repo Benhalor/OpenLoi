@@ -32,7 +32,7 @@ class AssembleeNationale:
             "VOTES": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/scrutins/Scrutins_XV.json.zip", "pollingFrequency": 1000000},
             "QUESTIONS_AU_GOUVERNEMENT": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_gouvernement/Questions_gouvernement_XV.json.zip", "pollingFrequency": 100000},
             "QUESTIONS_ORALES_SANS_DEBAT": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_orales_sans_debat/Questions_orales_sans_debat_XV.json.zip", "pollingFrequency": 100000},
-            "QUESTIONS_ECRITES": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_ecrites/Questions_ecrites_XV.json.zip", "pollingFrequency": 1000000},
+            "QUESTIONS_ECRITES": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_ecrites/Questions_ecrites_XV.json.zip", "pollingFrequency": 1000},
             "REUNIONS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/vp/reunions/Agenda_XV.json.zip", "pollingFrequency": 1000000},
             "AMENDEMENTS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/amendements_legis/Amendements_XV.json.zip", "pollingFrequency": 1000000},
 
@@ -357,7 +357,8 @@ class AssembleeNationale:
                 directoryToExtract+"/json", table="QUESTIONS_ORALES_SANS_DEBAT")
             print("json QUESTIONS_ORALES_SANS_DEBAT OK:"+str(self.__jsonReadOK))
             print("json QUESTIONS_ORALES_SANS_DEBAT NOK:"+str(self.__jsonReadNOK))
-            print("Upload QUESTIONS_ORALES_SANS_DEBAT in "+str(time.time()-lastTime))
+            print("Upload QUESTIONS_ORALES_SANS_DEBAT in " +
+                  str(time.time()-lastTime))
         elif sourceName == "QUESTIONS_ECRITES":
             lastTime = time.time()
             self.__jsonReadOK = 0
@@ -519,7 +520,7 @@ class AssembleeNationale:
 
 	"""
 
-    def search(self, term, maxNumberOfResults=10):
+    def search(self, term, maxNumberOfResults=10, numberOfMonthsOld=6):
         connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
                                       password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
@@ -544,7 +545,14 @@ class AssembleeNationale:
         # ------------------------------------------------------
         # Then get the results for document legislatifs
         tableDef = self.__dossierLegislatifDocumentTableDefinition
-        query = "SELECT dossierRef,ts_rank_cd(ts, to_tsquery('french',%s),2) AS score FROM DOSSIERS_LEGISLATIFS_DOCUMENT WHERE ts @@ to_tsquery('french',%s) ORDER by score, dossierRef DESC LIMIT %s;"
+           
+
+        query = "SELECT dossierRef,ts_rank_cd(ts, to_tsquery('french',%s),2) AS score,dateDepot " \
+            "FROM DOSSIERS_LEGISLATIFS_DOCUMENT "\
+            "WHERE ( ts @@ to_tsquery('french',%s)" \
+            ")" \
+            "ORDER by score, dossierRef  DESC LIMIT %s;"
+
         count = 0
 
         ListOfDossiersLegislatifs = []
@@ -557,13 +565,15 @@ class AssembleeNationale:
                 entryData = {}
                 entryData["dossierRef"] = entry[0]
                 entryData["score"] = entry[1]
-                d = {"uid": entryData["dossierRef"],"score": entryData["score"]}
-                if not any(di['uid'] == entryData["dossierRef"]  for di in ListOfDossiersLegislatifs):
+                d = {"uid": entryData["dossierRef"],
+                     "score": entryData["score"]}
+                if not any(di['uid'] == entryData["dossierRef"] for di in ListOfDossiersLegislatifs):
                     ListOfDossiersLegislatifs.append(d)
-                        
+
         except:
             traceback.print_exc()
 
+        print(ListOfDossiersLegislatifs)
         ret["count"] += count
         ret["listOfDossiersLegislatifs"].extend(ListOfDossiersLegislatifs)
 
@@ -574,7 +584,11 @@ class AssembleeNationale:
         for key in tableDef["schema"].keys():
             query += key + ","
         query = query[:-1]
-        query += ",ts_rank_cd(ts, to_tsquery('french',%s),2) AS score FROM QUESTIONS_ECRITES WHERE  ts @@ to_tsquery('french',%s) ORDER by score DESC LIMIT %s;"
+        query += ",ts_rank_cd(ts, to_tsquery('french',%s),2) AS score " \
+            "FROM QUESTIONS_ECRITES "\
+            "WHERE ( ts @@ to_tsquery('french',%s)" \
+            "AND ( (dateQuestion >  CURRENT_DATE - INTERVAL '%s months') OR (dateReponse >  CURRENT_DATE - INTERVAL '%s months') ))" \
+            "ORDER by score DESC LIMIT %s;"
 
         count = 0
 
@@ -582,7 +596,7 @@ class AssembleeNationale:
         processedQueryLogic = processedQuery.replace(" ", "|")
         try:
             cursor.execute(query, (processedQueryLogic,
-                           processedQueryLogic, maxNumberOfResults,))
+                           processedQueryLogic, numberOfMonthsOld, numberOfMonthsOld, maxNumberOfResults,))
             for entry in cursor.fetchall():
                 count += 1
                 entryData = {}
@@ -606,13 +620,17 @@ class AssembleeNationale:
         ret["listOfResults"] = []
 
         # ------------------------------------------------------
-        # Then get the results for questions orales dans debat
+        # Then get the results for questions orales sans debat
         tableDef = self.__questionOraleSansDebatTableDefinition
         query = "SELECT "
         for key in tableDef["schema"].keys():
             query += key + ","
         query = query[:-1]
-        query += ",ts_rank_cd(ts, to_tsquery('french',%s),2) AS score FROM QUESTIONS_ORALES_SANS_DEBAT WHERE  ts @@ to_tsquery('french',%s) ORDER by score DESC LIMIT %s;"
+        query += ",ts_rank_cd(ts, to_tsquery('french',%s),2) AS score " \
+            "FROM QUESTIONS_ORALES_SANS_DEBAT "\
+            "WHERE ( ts @@ to_tsquery('french',%s)" \
+            "AND ( (dateQuestion >  CURRENT_DATE - INTERVAL '%s months') OR (dateReponse >  CURRENT_DATE - INTERVAL '%s months') ))" \
+            "ORDER by score DESC LIMIT %s;"
 
         count = 0
 
@@ -620,7 +638,7 @@ class AssembleeNationale:
         processedQueryLogic = processedQuery.replace(" ", "|")
         try:
             cursor.execute(query, (processedQueryLogic,
-                           processedQueryLogic, maxNumberOfResults,))
+                           processedQueryLogic, numberOfMonthsOld, numberOfMonthsOld, maxNumberOfResults,))
             for entry in cursor.fetchall():
                 count += 1
                 entryData = {}
@@ -640,20 +658,23 @@ class AssembleeNationale:
             traceback.print_exc()
 
         ret["count"] += count
-        ret["listOfQuestionsOralesSansDebat"].extend(ListOfQuestionsOralesSansDebat)
+        ret["listOfQuestionsOralesSansDebat"].extend(
+            ListOfQuestionsOralesSansDebat)
         ret["listOfResults"] = []
 
         for questionEcrite in ret["listOfQuestionsEcrites"]:
-            ret["listOfResults"].append({"type": "questionEcrite", "uid": questionEcrite["uid"], "score": questionEcrite["score"]})
+            ret["listOfResults"].append(
+                {"type": "questionEcrite", "uid": questionEcrite["uid"], "score": questionEcrite["score"]})
         for questionOraleSansDebat in ret["listOfQuestionsOralesSansDebat"]:
-            ret["listOfResults"].append({"type": "questionOraleSansDebat", "uid": questionOraleSansDebat["uid"], "score": questionOraleSansDebat["score"]})
+            ret["listOfResults"].append(
+                {"type": "questionOraleSansDebat", "uid": questionOraleSansDebat["uid"], "score": questionOraleSansDebat["score"]})
         for dossierLegislatif in ret["listOfDossiersLegislatifs"]:
-            ret["listOfResults"].append({"type": "dossierLegislatif", "uid": dossierLegislatif["uid"], "score": dossierLegislatif["score"]})
-
+            ret["listOfResults"].append(
+                {"type": "dossierLegislatif", "uid": dossierLegislatif["uid"], "score": dossierLegislatif["score"]})
 
         # Sort by score
-        ret["listOfResults"] = sorted(ret["listOfResults"], key=lambda d: d['score'], reverse=True) 
-        print(ret["listOfResults"])
+        ret["listOfResults"] = sorted(
+            ret["listOfResults"], key=lambda d: d['score'], reverse=True)
 
         connection.close()
         return json.dumps(ret)
@@ -697,45 +718,12 @@ class AssembleeNationale:
 
         ret["count"] = count
         ret["listOfDossiersLegislatifs"] = ret["listOfDossiersLegislatifs"][:maxNumberOfResults]
+        ret["listOfResults"] = []
+        for dossier in ret["listOfDossiersLegislatifs"]:
+            ret["listOfResults"].append(
+                {"type": "dossierLegislatif", "uid": dossier, "score": 0})
         connection.close()
         return json.dumps(ret)
-
-    """__sortDossierLegislatifsUid
-				return a dossier legislatif by its uid
-				@params uid : uid of dossier
-				@return : list of {uid, date} order by date desc
-
-	"""
-
-    def __sortDossierLegislatifsUid(self, uidList):
-        connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
-                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
-        connection.autocommit = True
-        cursor = connection.cursor()
-
-        uidAndDateList = []
-        for uid in uidList:
-            lastUpdate = None
-            ret = {}
-            query = "SELECT lastUpdate FROM DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE WHERE uid=%s;"
-
-            try:
-                cursor.execute(query, (uid,))
-                entry = cursor.fetchone()
-                print(entry)
-                lastUpdate = entry[0]
-                uidAndDateList.append({"uid": uid, "date": lastUpdate})
-            except:
-                traceback.print_exc()
-                print(uid)
-
-        # sort list on date
-        uidAndDateList.sort(key=lambda x: x['date'], reverse=True)
-        ret = []
-        for element in uidAndDateList:
-            ret.append(element["uid"])
-        connection.close()
-        return ret
 
     """__htmlEscape
 				Escape some char string
@@ -819,7 +807,6 @@ class AssembleeNationale:
             traceback.print_exc()
         connection.close()
         return ret
-    
 
     """getQuestionOraleSansDebatByUid
 				return a question ecrite by its uid
@@ -854,7 +841,6 @@ class AssembleeNationale:
             traceback.print_exc()
         connection.close()
         return ret
-
 
     """getQuestionEcriteByUid
 				return a question ecrite by its uid
