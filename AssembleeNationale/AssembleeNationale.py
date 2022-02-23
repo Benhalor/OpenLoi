@@ -551,7 +551,7 @@ class AssembleeNationale:
             "FROM DOSSIERS_LEGISLATIFS_DOCUMENT "\
             "WHERE ( ts @@ to_tsquery('french',%s)" \
             ")" \
-            "ORDER by score, dossierRef  DESC LIMIT %s;"
+            "ORDER by score  DESC LIMIT %s;"
 
         count = 0
 
