@@ -542,124 +542,33 @@ class AssembleeNationale:
         except:
             traceback.print_exc()
 
+        processedQueryLogic = processedQuery.replace(" ", "|")
+
         # ------------------------------------------------------
         # Then get the results for document legislatifs
-        tableDef = self.__dossierLegislatifDocumentTableDefinition
-           
+        count, listOfdossierLegislatif = self.__documentLegislatifSearch(
+            cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, "DOSSIERS_LEGISLATIFS_DOCUMENT")
 
-        query = "SELECT dossierRef,ts_rank_cd(ts, to_tsquery('french',%s),2) AS score,dateDepot " \
-            "FROM DOSSIERS_LEGISLATIFS_DOCUMENT "\
-            "WHERE ( ts @@ to_tsquery('french',%s)" \
-            ")" \
-            "ORDER by score  DESC LIMIT %s;"
-
-        count = 0
-
-        ListOfDossiersLegislatifs = []
-        processedQueryLogic = processedQuery.replace(" ", "|")
-        try:
-            cursor.execute(query, (processedQueryLogic,
-                           processedQueryLogic, maxNumberOfResults,))
-            for entry in cursor.fetchall():
-                count += 1
-                entryData = {}
-                entryData["dossierRef"] = entry[0]
-                entryData["score"] = entry[1]
-                d = {"uid": entryData["dossierRef"],
-                     "score": entryData["score"]}
-                if not any(di['uid'] == entryData["dossierRef"] for di in ListOfDossiersLegislatifs):
-                    ListOfDossiersLegislatifs.append(d)
-
-        except:
-            traceback.print_exc()
-
-        print(ListOfDossiersLegislatifs)
         ret["count"] += count
-        ret["listOfDossiersLegislatifs"].extend(ListOfDossiersLegislatifs)
+        ret["listOfDossiersLegislatifs"].extend(listOfdossierLegislatif)
 
         # ------------------------------------------------------
         # Then get the results for questions écrites
-        tableDef = self.__questionEcriteTableDefinition
-        query = "SELECT "
-        for key in tableDef["schema"].keys():
-            query += key + ","
-        query = query[:-1]
-        query += ",ts_rank_cd(ts, to_tsquery('french',%s),2) AS score " \
-            "FROM QUESTIONS_ECRITES "\
-            "WHERE ( ts @@ to_tsquery('french',%s)" \
-            "AND ( (dateQuestion >  CURRENT_DATE - INTERVAL '%s months') OR (dateReponse >  CURRENT_DATE - INTERVAL '%s months') ))" \
-            "ORDER by score DESC LIMIT %s;"
-
-        count = 0
-
-        ListOfQuestionsEcrites = []
-        processedQueryLogic = processedQuery.replace(" ", "|")
-        try:
-            cursor.execute(query, (processedQueryLogic,
-                           processedQueryLogic, numberOfMonthsOld, numberOfMonthsOld, maxNumberOfResults,))
-            for entry in cursor.fetchall():
-                count += 1
-                entryData = {}
-                listOfColumn = list(
-                    tableDef["schema"].keys())
-                for i in range(len(entry)-1):
-                    if type(entry[i]) == datetime.datetime:
-                        entryData[listOfColumn[i]] = str(entry[i])
-                    else:
-                        entryData[listOfColumn[i]] = entry[i]
-                entryData["score"] = entry[i+1]
-                if entryData["uid"] not in ListOfQuestionsEcrites:
-                    ListOfQuestionsEcrites.append(
-                        {"uid": entryData["uid"], "score": entryData["score"]}
-                    )
-        except:
-            traceback.print_exc()
-
+        count, listOfQuestionsEcrites = self.__listOfQuestionsSearch(
+            cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, "QUESTIONS_ECRITES")
         ret["count"] += count
-        ret["listOfQuestionsEcrites"].extend(ListOfQuestionsEcrites)
-        ret["listOfResults"] = []
+        ret["listOfQuestionsEcrites"].extend(listOfQuestionsEcrites)
 
         # ------------------------------------------------------
         # Then get the results for questions orales sans debat
-        tableDef = self.__questionOraleSansDebatTableDefinition
-        query = "SELECT "
-        for key in tableDef["schema"].keys():
-            query += key + ","
-        query = query[:-1]
-        query += ",ts_rank_cd(ts, to_tsquery('french',%s),2) AS score " \
-            "FROM QUESTIONS_ORALES_SANS_DEBAT "\
-            "WHERE ( ts @@ to_tsquery('french',%s)" \
-            "AND ( (dateQuestion >  CURRENT_DATE - INTERVAL '%s months') OR (dateReponse >  CURRENT_DATE - INTERVAL '%s months') ))" \
-            "ORDER by score DESC LIMIT %s;"
-
-        count = 0
-
-        ListOfQuestionsOralesSansDebat = []
-        processedQueryLogic = processedQuery.replace(" ", "|")
-        try:
-            cursor.execute(query, (processedQueryLogic,
-                           processedQueryLogic, numberOfMonthsOld, numberOfMonthsOld, maxNumberOfResults,))
-            for entry in cursor.fetchall():
-                count += 1
-                entryData = {}
-                listOfColumn = list(
-                    tableDef["schema"].keys())
-                for i in range(len(entry)-1):
-                    if type(entry[i]) == datetime.datetime:
-                        entryData[listOfColumn[i]] = str(entry[i])
-                    else:
-                        entryData[listOfColumn[i]] = entry[i]
-                entryData["score"] = entry[i+1]
-                if entryData["uid"] not in ListOfQuestionsOralesSansDebat:
-                    ListOfQuestionsOralesSansDebat.append(
-                        {"uid": entryData["uid"], "score": entryData["score"]}
-                    )
-        except:
-            traceback.print_exc()
-
+        count, listOfQuestionsEcrites = self.__listOfQuestionsSearch(
+            cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, "QUESTIONS_ORALES_SANS_DEBAT")
         ret["count"] += count
-        ret["listOfQuestionsOralesSansDebat"].extend(
-            ListOfQuestionsOralesSansDebat)
+        ret["listOfQuestionsOralesSansDebat"].extend(listOfQuestionsEcrites)
+
+
+
+        # Gather all results and give them a type key.
         ret["listOfResults"] = []
 
         for questionEcrite in ret["listOfQuestionsEcrites"]:
@@ -678,6 +587,71 @@ class AssembleeNationale:
 
         connection.close()
         return json.dumps(ret)
+
+
+    """__documentLegislatifSearch
+				Generate a list of question containing a given query
+
+	"""
+    def __documentLegislatifSearch(self, cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, tableName):
+
+        query = "SELECT dossierRef,ts_rank_cd(ts, to_tsquery('french',%s),2) AS score,dateDepot " \
+            "FROM "+ tableName +" "\
+            "WHERE ( ts @@ to_tsquery('french',%s)" \
+            ")" \
+            "ORDER by score  DESC LIMIT %s;"
+
+        count = 0
+
+        listOfdossierLegislatif = []
+        try:
+            cursor.execute(query, (processedQueryLogic,
+                           processedQueryLogic, maxNumberOfResults,))
+            for entry in cursor.fetchall():
+                count += 1
+                entryData = {}
+                entryData["dossierRef"] = entry[0]
+                entryData["score"] = entry[1]
+                d = {"uid": entryData["dossierRef"],
+                     "score": entryData["score"]}
+                if not any(di['uid'] == entryData["dossierRef"] for di in listOfdossierLegislatif):
+                    listOfdossierLegislatif.append(d)
+
+        except:
+            traceback.print_exc()
+
+        return count, listOfdossierLegislatif
+
+    """__listOfQuestionsSearch
+				Generate a list of question containing a given query
+
+	"""
+    def __listOfQuestionsSearch(self, cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, tableName):
+
+        listOfQuestions = []
+        count = 0
+
+        query = "SELECT uid, dateQuestion, dateReponse ,ts_rank_cd(ts, to_tsquery('french',%s),2) AS score " \
+            "FROM "+ tableName +" "\
+            "WHERE ( ts @@ to_tsquery('french',%s)" \
+            "AND ( (dateQuestion >  CURRENT_DATE - INTERVAL '%s months') OR (dateReponse >  CURRENT_DATE - INTERVAL '%s months') ))" \
+            "ORDER by score DESC LIMIT %s;"
+
+        try:
+            cursor.execute(query, (processedQueryLogic,
+                                   processedQueryLogic, numberOfMonthsOld, numberOfMonthsOld, maxNumberOfResults,))
+            for entry in cursor.fetchall():
+                count += 1
+                entryData = {}
+                entryData["uid"] = entry[0]
+                entryData["score"] = entry[3]
+                if entryData["uid"] not in listOfQuestions:
+                    listOfQuestions.append(
+                        {"uid": entryData["uid"], "score": entryData["score"]}
+                    )
+        except:
+            traceback.print_exc()
+        return count, listOfQuestions
 
     """getLastNews
 				returns last news
