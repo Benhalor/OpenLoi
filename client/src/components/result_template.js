@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import DossierLegislatif from './dossier_legislatif';
-import QuestionEcriteAN from './question_ecrite_an';
+import Question from './question';
 
 
 class ResultTemplate extends React.Component {
@@ -10,10 +10,10 @@ class ResultTemplate extends React.Component {
 
 
     render() {
-        if (this.props.data.type === "questionEcrite") {
+        if (this.props.data.type === "questionEcrite" || this.props.data.type === "questionOraleSansDebat") {
             return (
                 <div className="">
-                     <QuestionEcriteAN key={this.props.data.uid + this.props.query} questionUid={this.props.data.uid} query={this.props.query} />
+                     <Question key={this.props.data.uid + this.props.query} questionUid={this.props.data.uid} query={this.props.query} questionType={this.props.data.type} />
                 </div>
             );
         } else if (this.props.data.type === "dossierLegislatif") {

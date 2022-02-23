@@ -4,11 +4,11 @@ import * as config from './config';
 
 import { convertDate, sanitizeWords, generateSearchWords } from './utils'
 
-class QuestionEcriteAN extends React.Component {
+class Question extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { displayQuestion: false, displayReponse: false, questionEcrite: null };
-        this.getQuestionEcrite(this.props.questionUid)
+        this.state = { displayQuestion: false, displayReponse: false, question: null };
+        this.getQuestion(this.props.questionUid, this.props.questionType)
     }
 
     changedisplayQuestion() {
@@ -21,12 +21,19 @@ class QuestionEcriteAN extends React.Component {
     }
 
 
-    getQuestionEcrite(uid) {
-        fetch(config.apiUrl + 'questionEcrite/' + uid)
+    getQuestion(uid, questionType) {
+        var apiTag
+        if (questionType === "questionEcrite") {
+            apiTag = 'questionEcrite'
+        } else if (questionType === "questionOraleSansDebat") {
+            apiTag = 'questionOraleSansDebat'
+        }
+
+        fetch(config.apiUrl + apiTag + "/" + uid)
             .then(response => response.json())
             .then(
                 (result) => {
-                    this.setState({ questionEcrite: result })
+                    this.setState({ question: result })
                 }
 
             )
@@ -37,7 +44,7 @@ class QuestionEcriteAN extends React.Component {
 
     render() {
 
-        if (this.state.questionEcrite !== null) {
+        if (this.state.question !== null) {
             return (
                 <div className="resultBloc">
 
@@ -46,13 +53,14 @@ class QuestionEcriteAN extends React.Component {
                         <div className="col text-column">
                             <div className="row">
 
-                                📝 Question écrite d'un député au gouvernement
+                                {this.props.questionType == "questionEcrite" && "📝 Question écrite d'un député au gouvernement"}
+                                {this.props.questionType == "questionOraleSansDebat" && "📢 Question orale d'un député au gouvernement"}
                             </div>
                             <div className="row entete">
                                 <Highlighter
                                     searchWords={this.props.query == "" ? [] : generateSearchWords(this.props.query)}
                                     sanitize={sanitizeWords}
-                                    textToHighlight={this.state.questionEcrite.resume} />
+                                    textToHighlight={this.state.question.resume} />
 
 
                             </div>
@@ -61,8 +69,8 @@ class QuestionEcriteAN extends React.Component {
 
                     <div className="col">
                         <div className="titleSubResultBloc cursor" onClick={this.changedisplayQuestion.bind(this)}>
-                            {this.state.displayQuestion ? "➖" : "➕"} Question de {JSON.parse(this.state.questionEcrite.question).texteQuestion.texte.split(' ').slice(0, 3).join(' ')}
-                            <span className="dossierStatus"> {this.state.questionEcrite.dateQuestion !== null && "▪ Déposée le " + convertDate(this.state.questionEcrite.dateQuestion)}</span>
+                            {this.state.displayQuestion ? "➖" : "➕"} Question de {JSON.parse(this.state.question.question).texteQuestion.texte.split(' ').slice(0, 3).join(' ')}
+                            <span className="dossierStatus"> {this.state.question.dateQuestion !== null && "▪ Déposée le " + convertDate(this.state.question.dateQuestion)}</span>
                         </div>
                         {this.state.displayQuestion &&
                             <div className="subResultBloc">
@@ -70,30 +78,30 @@ class QuestionEcriteAN extends React.Component {
                                     <Highlighter
                                         searchWords={this.props.query == "" ? [] : generateSearchWords(this.props.query)}
                                         sanitize={sanitizeWords}
-                                        textToHighlight={JSON.parse(this.state.questionEcrite.question).texteQuestion.texte} />
+                                        textToHighlight={JSON.parse(this.state.question.question).texteQuestion.texte} />
                                 </div>
                             </div>
 
                         }
                         <div className="titleSubResultBloc cursor" onClick={this.changedisplayReponse.bind(this)}>
-                            {(this.state.displayReponse && this.state.questionEcrite.dateReponse !== null) && "➖"}
-                            {(!this.state.displayReponse && this.state.questionEcrite.dateReponse !== null) && "➕"}
-                            {(this.state.questionEcrite.dateReponse === null) && "⏱"}
-                            Réponse du {this.state.questionEcrite.ministere}
-                            <span className="dossierStatus">{this.state.questionEcrite.dateReponse !== null ?
-                                "▪ Déposée le " + convertDate(this.state.questionEcrite.dateReponse)
+                            {(this.state.displayReponse && this.state.question.dateReponse !== null) && "➖"}
+                            {(!this.state.displayReponse && this.state.question.dateReponse !== null) && "➕"}
+                            {(this.state.question.dateReponse === null) && "⏱"}
+                            Réponse du {this.state.question.ministere}
+                            <span className="dossierStatus">{this.state.question.dateReponse !== null ?
+                                "▪ Déposée le " + convertDate(this.state.question.dateReponse)
                                 : "En attente de réponse"
                             }
                             </span>
                         </div>
-                        {(this.state.displayReponse && this.state.questionEcrite.reponse !== null) &&
+                        {(this.state.displayReponse && this.state.question.reponse !== null) &&
                             <div className="subResultBloc">
                                 <div className="col text-column-sub">
 
                                     <Highlighter
                                         searchWords={this.props.query == "" ? [] : generateSearchWords(this.props.query)}
                                         sanitize={sanitizeWords}
-                                        textToHighlight={JSON.parse(this.state.questionEcrite.reponse).texteReponse.texte} />
+                                        textToHighlight={JSON.parse(this.state.question.reponse).texteReponse.texte} />
 
 
                                 </div>
@@ -115,4 +123,4 @@ class QuestionEcriteAN extends React.Component {
     }
 }
 
-export default QuestionEcriteAN
+export default Question

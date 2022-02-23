@@ -28,13 +28,13 @@ class AssembleeNationale:
         self.__sourceList = {
             "DOSSIERS_LEGISLATIFS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/dossiers_legislatifs/Dossiers_Legislatifs_XV.json.zip", "pollingFrequency": 1000000},
             "AGENDA": {"link": "http://data.assemblee-nationale.fr/static/openData/repository/15/vp/seances/seances_publique_excel.csv", "pollingFrequency": 1000000},
-            "AMENDEMENTS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/amendements_legis/Amendements_XV.json.zip", "pollingFrequency": 1000000},
             "DEBATS_EN_SEANCE_PUBLIQUE": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/vp/syceronbrut/syseron.xml.zip", "pollingFrequency": 1000000},
             "VOTES": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/scrutins/Scrutins_XV.json.zip", "pollingFrequency": 1000000},
             "QUESTIONS_AU_GOUVERNEMENT": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_gouvernement/Questions_gouvernement_XV.json.zip", "pollingFrequency": 100000},
             "QUESTIONS_ORALES_SANS_DEBAT": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_orales_sans_debat/Questions_orales_sans_debat_XV.json.zip", "pollingFrequency": 100000},
             "QUESTIONS_ECRITES": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_ecrites/Questions_ecrites_XV.json.zip", "pollingFrequency": 1000000},
             "REUNIONS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/vp/reunions/Agenda_XV.json.zip", "pollingFrequency": 1000000},
+            "AMENDEMENTS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/amendements_legis/Amendements_XV.json.zip", "pollingFrequency": 1000000},
 
         }
 
@@ -107,7 +107,25 @@ class AssembleeNationale:
             }
         }
 
+        self.__questionOraleSansDebatTableDefinition = {
+            "tableName": "QUESTIONS_ORALES_SANS_DEBAT",
+            "source": "AN",
+            "schema": {
+                "uid": {"path": "question:uid", "htmlEscape": False, "type": "VARCHAR ( 40 ) PRIMARY KEY", "search": True},
+                "rubrique": {"path": "question:indexationAN:rubrique", "htmlEscape": True, "type": "VARCHAR ( 500 )", "search": True},
+                "resume": {"path": "question:indexationAN:ANALYSE:ANA", "htmlEscape": True, "type": "VARCHAR ( 2000 )", "search": True},
+                "auteur": {"path": "question:auteur:identite:acteurRef", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": False},
+                "auteurGroupe": {"path": "question:auteur:groupe:developpe", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": False},
+                "ministere": {"path": "question:minInt:developpe", "htmlEscape": True, "type": "VARCHAR ( 1000 )", "search": True},
+                "question": {"path": "question:textesQuestion", "htmlEscape": True, "type": "VARCHAR ( 200000 )", "search": True},
+                "reponse": {"path": "question:textesReponse", "htmlEscape": True, "type": "VARCHAR ( 200000 )", "search": True},
+                "dateQuestion": {"path": "specialHandling...", "htmlEscape": False, "type": "DATE", "search": False},
+                "dateReponse": {"path": "specialHandling...", "htmlEscape": False, "type": "DATE", "search": False}
+            }
+        }
+
         self.__tableList = {
+            "QUESTIONS_ORALES_SANS_DEBAT": self.__questionOraleSansDebatTableDefinition,
             "DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
             "DOSSIERS_LEGISLATIFS_DOSSIER_PARLEMENTAIRE": self.__dossierLegislatifDossierParlementaireTableDefinition,
             "AMENDEMENT": self.__amendementTableDefinition,
@@ -332,8 +350,14 @@ class AssembleeNationale:
         elif sourceName == "QUESTIONS_AU_GOUVERNEMENT":
             pass
         elif sourceName == "QUESTIONS_ORALES_SANS_DEBAT":
-
-            pass
+            lastTime = time.time()
+            self.__jsonReadOK = 0
+            self.__jsonReadNOK = 0
+            self.__uploadToDb(
+                directoryToExtract+"/json", table="QUESTIONS_ORALES_SANS_DEBAT")
+            print("json QUESTIONS_ORALES_SANS_DEBAT OK:"+str(self.__jsonReadOK))
+            print("json QUESTIONS_ORALES_SANS_DEBAT NOK:"+str(self.__jsonReadNOK))
+            print("Upload QUESTIONS_ORALES_SANS_DEBAT in "+str(time.time()-lastTime))
         elif sourceName == "QUESTIONS_ECRITES":
             lastTime = time.time()
             self.__jsonReadOK = 0
@@ -418,7 +442,7 @@ class AssembleeNationale:
                     "value"]
                 columnString += columnName+","
                 valuesString += "\'"+lastUpdate+"\',"
-            elif tableDef["tableName"] == "QUESTIONS_ECRITES" and columnName == "dateReponse":
+            elif "QUESTION" in tableDef["tableName"] and columnName == "dateReponse":
                 # Sometimes there is not yet a response. Sometimes there are multiple response in a list. In this case, take the last date. Moreover, date format is not standard
                 if doc["question"]["textesReponse"] is not None:
                     if type(doc["question"]["textesReponse"]["texteReponse"]) is list:
@@ -427,7 +451,7 @@ class AssembleeNationale:
                         date = doc["question"]["textesReponse"]["texteReponse"]["infoJO"]["dateJO"]
                     columnString += columnName+","
                     valuesString += "TO_DATE(\'"+date+"\' , \'DD/MM/YYYY\'),"
-            elif tableDef["tableName"] == "QUESTIONS_ECRITES" and columnName == "dateQuestion":
+            elif "QUESTION" in tableDef["tableName"] and columnName == "dateQuestion":
                 # Sometimes there are multiple question in a list. In this case, take the last date. Moreover, date format is not standard
                 if type(doc["question"]["textesQuestion"]["texteQuestion"]) is list:
                     date = doc["question"]["textesQuestion"]["texteQuestion"][-1]["infoJO"]["dateJO"]
@@ -506,6 +530,7 @@ class AssembleeNationale:
         ret = {}
         ret["listOfDossiersLegislatifs"] = []
         ret["listOfQuestionsEcrites"] = []
+        ret["listOfQuestionsOralesSansDebat"] = []
         ret["count"] = 0
 
         # First get the radicals (use for highlight in react)
@@ -580,10 +605,51 @@ class AssembleeNationale:
         ret["listOfQuestionsEcrites"].extend(ListOfQuestionsEcrites)
         ret["listOfResults"] = []
 
+        # ------------------------------------------------------
+        # Then get the results for questions orales dans debat
+        tableDef = self.__questionOraleSansDebatTableDefinition
+        query = "SELECT "
+        for key in tableDef["schema"].keys():
+            query += key + ","
+        query = query[:-1]
+        query += ",ts_rank_cd(ts, to_tsquery('french',%s),2) AS score FROM QUESTIONS_ORALES_SANS_DEBAT WHERE  ts @@ to_tsquery('french',%s) ORDER by score DESC LIMIT %s;"
+
+        count = 0
+
+        ListOfQuestionsOralesSansDebat = []
+        processedQueryLogic = processedQuery.replace(" ", "|")
+        try:
+            cursor.execute(query, (processedQueryLogic,
+                           processedQueryLogic, maxNumberOfResults,))
+            for entry in cursor.fetchall():
+                count += 1
+                entryData = {}
+                listOfColumn = list(
+                    tableDef["schema"].keys())
+                for i in range(len(entry)-1):
+                    if type(entry[i]) == datetime.datetime:
+                        entryData[listOfColumn[i]] = str(entry[i])
+                    else:
+                        entryData[listOfColumn[i]] = entry[i]
+                entryData["score"] = entry[i+1]
+                if entryData["uid"] not in ListOfQuestionsOralesSansDebat:
+                    ListOfQuestionsOralesSansDebat.append(
+                        {"uid": entryData["uid"], "score": entryData["score"]}
+                    )
+        except:
+            traceback.print_exc()
+
+        ret["count"] += count
+        ret["listOfQuestionsOralesSansDebat"].extend(ListOfQuestionsOralesSansDebat)
+        ret["listOfResults"] = []
+
         for questionEcrite in ret["listOfQuestionsEcrites"]:
             ret["listOfResults"].append({"type": "questionEcrite", "uid": questionEcrite["uid"], "score": questionEcrite["score"]})
+        for questionOraleSansDebat in ret["listOfQuestionsOralesSansDebat"]:
+            ret["listOfResults"].append({"type": "questionOraleSansDebat", "uid": questionOraleSansDebat["uid"], "score": questionOraleSansDebat["score"]})
         for dossierLegislatif in ret["listOfDossiersLegislatifs"]:
             ret["listOfResults"].append({"type": "dossierLegislatif", "uid": dossierLegislatif["uid"], "score": dossierLegislatif["score"]})
+
 
         # Sort by score
         ret["listOfResults"] = sorted(ret["listOfResults"], key=lambda d: d['score'], reverse=True) 
@@ -599,7 +665,7 @@ class AssembleeNationale:
 
 	"""
 
-    def getLastNews(self, maxNumberOfResults=100):
+    def getLastNews(self, maxNumberOfResults=10):
         connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
                                       password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
@@ -753,6 +819,42 @@ class AssembleeNationale:
             traceback.print_exc()
         connection.close()
         return ret
+    
+
+    """getQuestionOraleSansDebatByUid
+				return a question ecrite by its uid
+				@params uid : uid of question ecrite
+				@return : json of the question
+
+	"""
+
+    def getQuestionOraleSansDebatByUid(self, uid):
+        connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
+                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection.autocommit = True
+        cursor = connection.cursor()
+
+        tableDef = self.__questionEcriteTableDefinition
+
+        ret = {}
+        query = "SELECT "
+        for key in tableDef["schema"].keys():
+            query += key + ","
+        query = query[:-1]
+        query += " FROM QUESTIONS_ORALES_SANS_DEBAT WHERE uid=%s;"
+
+        try:
+            cursor.execute(query, (uid,))
+            entry = cursor.fetchone()
+            listOfColumn = list(
+                tableDef["schema"].keys())
+            for i in range(len(entry)):
+                ret[listOfColumn[i]] = entry[i]
+        except:
+            traceback.print_exc()
+        connection.close()
+        return ret
+
 
     """getQuestionEcriteByUid
 				return a question ecrite by its uid
