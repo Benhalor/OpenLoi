@@ -1,4 +1,5 @@
 import logo from './logo.png';
+import logoClever from './logoClever.png';
 import './App.css';
 import React from 'react';
 import NameForm from './components/name_form';
@@ -55,9 +56,11 @@ class App extends React.Component {
 
 
 
-        <footer className="App-footer">
-
-        </footer>
+        <div className="App-footer">
+        Hébergé gracieusement par <a href="https://www.clever-cloud.com/" target="_blank" rel="noopener noreferrer" >
+        <img className = "logo-clever" alt="Logo clever cloud" src={logoClever} />
+        </a>
+        </div>
 
       </div>
 
