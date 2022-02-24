@@ -18,7 +18,7 @@ export function convertDate(str) {
 }
 
 export function sanitizeWords(string) {
-    if (string !== undefined) {
+    if (string !== undefined && string !== null) {
         return string.normalize("NFD").replace(/\p{Diacritic}/gu, "")
     } else {
         return string
@@ -34,7 +34,7 @@ export function generateSearchWords(spacedSeparatedWords) {
 }
 
 export function firstLetterUppercase(string) {
-    if (string !== undefined) {
+    if (string !== undefined && string !== null) {
         return string.charAt(0).toUpperCase() + string.slice(1);
     } else {
         return string
@@ -51,7 +51,6 @@ export function generateHighlightedHtml(textToHighlight, query, sanitizeFunction
     } else {
         searchWords = generateSearchWords(query)
     }
-    console.log(searchWords)
     const chunks = findAll({
         sanitize: sanitizeFunction,
         searchWords: searchWords,

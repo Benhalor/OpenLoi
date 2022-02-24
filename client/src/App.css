@@ -431,3 +431,7 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
     font-size: 1.2rem;
     text-align: center;
   }
+
+  .amendement mark {
+      background-color: orangered;
+  }

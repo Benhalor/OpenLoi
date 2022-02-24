@@ -629,7 +629,7 @@ class AssembleeNationale:
             tempResult, key=lambda d: d['score'], reverse=True)
         ret["listOfResults"].extend(tempResult)
 
-        if count < maxNumberOfResults:
+        if ret["count"] < maxNumberOfResults:
             processedQueryLogic = processedQuery.replace(" ", "|")
 
             # ------------------------------------------------------
@@ -705,7 +705,6 @@ class AssembleeNationale:
             cursor.execute(query, (processedQueryLogic,
                            processedQueryLogic,  maxNumberOfResults,))
             for entry in cursor.fetchall():
-                count += 1
                 entryData = {}
                 entryData["dossierRef"] = entry[0]
                 entryData["score"] = entry[1]
@@ -713,6 +712,7 @@ class AssembleeNationale:
                      "score": entryData["score"]}
                 if not any(di['uid'] == entryData["dossierRef"] for di in listOfdossierLegislatif+initialList):
                     listOfdossierLegislatif.append(d)
+                    count += 1
 
         except:
             traceback.print_exc()
@@ -738,7 +738,6 @@ class AssembleeNationale:
             cursor.execute(query, (processedQueryLogic,
                                    processedQueryLogic, numberOfMonthsOld, numberOfMonthsOld,  maxNumberOfResults,))
             for entry in cursor.fetchall():
-                count += 1
                 entryData = {}
                 entryData["uid"] = entry[0]
                 entryData["score"] = entry[1]
@@ -746,6 +745,7 @@ class AssembleeNationale:
                     listOfQuestions.append(
                         {"uid": entryData["uid"], "score": entryData["score"]}
                     )
+                    count += 1
         except:
             traceback.print_exc()
         return count, listOfQuestions
