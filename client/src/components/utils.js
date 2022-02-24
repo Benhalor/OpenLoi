@@ -51,10 +51,12 @@ export function generateHighlightedHtml(textToHighlight, query, sanitizeFunction
     } else {
         searchWords = generateSearchWords(query)
     }
+    console.log(searchWords)
     const chunks = findAll({
-        sanitizeFunction,
-        searchWords,
-        textToHighlight
+        sanitize: sanitizeFunction,
+        searchWords: searchWords,
+        textToHighlight: textToHighlight
+
     });
 
     const highlightedText = chunks
