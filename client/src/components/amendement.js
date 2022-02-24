@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import Highlighter from "react-highlight-words";
-import {convertDate,sanitizeWords,generateSearchWords, firstLetterUppercase} from './utils'
+import { convertDate, sanitizeWords, generateHighlightedHtml } from './utils'
 
 class Amendement extends React.Component {
     constructor(props) {
@@ -34,11 +34,11 @@ class Amendement extends React.Component {
             return "Non soutenu le " + convertDate(this.props.data.dateSort) + "😑";
         } else if (this.props.data.etat == "A discuter") {
             return "A discuter 💬";
-        }else {
+        } else {
             return this.props.data.sort + "|" + this.props.data.etat + "| " + this.props.data.sousEtat
         }
     }
-    
+
     render() {
 
 
@@ -58,15 +58,15 @@ class Amendement extends React.Component {
                         {this.state.displayAmendement &&
                             <div className="col">
                                 <div className="row textDispositifAmendement" >
-                                    <div dangerouslySetInnerHTML={{ __html: this.props.data.dispositif }} />
+                                    <div dangerouslySetInnerHTML={{ __html: generateHighlightedHtml(this.props.data.dispositif, this.props.query, sanitizeWords) }}></div>
                                 </div>
                                 <div className="row textAmendement" >
-                                    <div dangerouslySetInnerHTML={{ __html: this.props.data.exposeSommaire }} />
+                                    <div dangerouslySetInnerHTML={{ __html: generateHighlightedHtml(this.props.data.exposeSommaire, this.props.query, sanitizeWords) }}></div>
                                 </div>
                                 <div className="row deputeNames" >
-                                    <div dangerouslySetInnerHTML={{ __html: this.props.data.signataires }} />
+                                    <div dangerouslySetInnerHTML={{ __html: generateHighlightedHtml(this.props.data.signataires, this.props.query, sanitizeWords) }}></div>
                                 </div>
-                               
+
                             </div>
                         }
 

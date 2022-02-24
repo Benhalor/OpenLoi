@@ -8,7 +8,7 @@ import NameForm from './name_form';
 class SubEtapeLegislative extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { texteAssocie: null, amendements: null, amendementsQuery: null, dateActe: null, userQuery: ""};
+        this.state = { texteAssocie: null, amendements: null, amendementsQuery: null, dateActe: null, userQuery: "" };
         this.getAssociatedDocument()
         //console.log(this.state.data)
     }
@@ -36,23 +36,30 @@ class SubEtapeLegislative extends React.Component {
             this.state.dateActe = lastEtape.dateActe
             //console.log(lastEtape)
         } else if (this.props.data.libelleActe.nomCanonique == "Travaux des commissions") {
-            var lastEtape = this.props.data.actesLegislatifs.acteLegislatif.actesLegislatifs.acteLegislatif
-            if (Array.isArray(lastEtape)) {
-                lastEtape = lastEtape.slice(-1)[0]
-            } else {
-                lastEtape = lastEtape
+            try {
+                var lastEtape = this.props.data.actesLegislatifs.acteLegislatif.actesLegislatifs.acteLegislatif
+                if (Array.isArray(lastEtape)) {
+                    lastEtape = lastEtape.slice(-1)[0]
+                } else {
+                    lastEtape = lastEtape
+                }
+                this.state.dateActe = lastEtape.dateActe
+
+                fetch(config.apiUrl + 'documentById/' + lastEtape.texteAdopte)
+                    .then(response => response.json())
+                    .then(
+                        (result) => {
+                            this.setState({ texteAssocie: result })
+                            this.getAmendements(result.uid)
+                        }
+
+                    )
+            } catch (error) {
+                console.error(error);
+                console.log( this.props.data)
             }
-            this.state.dateActe = lastEtape.dateActe
 
-            fetch(config.apiUrl + 'documentById/' + lastEtape.texteAdopte)
-                .then(response => response.json())
-                .then(
-                    (result) => {
-                        this.setState({ texteAssocie: result })
-                        this.getAmendements(result.uid)
-                    }
 
-                )
 
         } else if (this.props.data.libelleActe.nomCanonique == "Commission Mixte Paritaire") {
             var lastEtape = this.props.data.actesLegislatifs.acteLegislatif

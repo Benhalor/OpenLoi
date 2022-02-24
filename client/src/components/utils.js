@@ -1,3 +1,5 @@
+import { findAll } from "highlight-words-core";
+
 export function convertDate(str) {
 
     var date = new Date(str)
@@ -38,4 +40,33 @@ export function firstLetterUppercase(string) {
         return string
     }
 
+}
+
+export function generateHighlightedHtml(textToHighlight, query, sanitizeFunction) {
+
+    var searchWords
+
+    if (query == "") {
+        searchWords = []
+    } else {
+        searchWords = generateSearchWords(query)
+    }
+    const chunks = findAll({
+        sanitizeFunction,
+        searchWords,
+        textToHighlight
+    });
+
+    const highlightedText = chunks
+        .map(chunk => {
+            const { end, highlight, start } = chunk;
+            const text = textToHighlight.substr(start, end - start);
+            if (highlight) {
+                return `<mark>${text}</mark>`;
+            } else {
+                return text;
+            }
+        })
+        .join("");
+    return highlightedText
 }

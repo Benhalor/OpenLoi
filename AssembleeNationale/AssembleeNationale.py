@@ -693,10 +693,9 @@ class AssembleeNationale:
 
     def __documentLegislatifSearch(self, cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, tableName, initialList=[]):
 
-        query = "SELECT dossierRef,ts_rank_cd(ts, to_tsquery('french',%s),2) AS score,dateDepot " \
+        query = "SELECT dossierRef,ts_rank_cd(ts, to_tsquery('french',%s),2) AS score,dateCreation " \
             "FROM " + tableName + " "\
-            "WHERE ( ts @@ to_tsquery('french',%s)" \
-            ")" \
+            "WHERE ( ts @@ to_tsquery('french',%s))" \
             "ORDER by score  DESC LIMIT %s;"
 
         count = 0
@@ -704,7 +703,7 @@ class AssembleeNationale:
         listOfdossierLegislatif = []
         try:
             cursor.execute(query, (processedQueryLogic,
-                           processedQueryLogic, maxNumberOfResults,))
+                           processedQueryLogic,  maxNumberOfResults,))
             for entry in cursor.fetchall():
                 count += 1
                 entryData = {}

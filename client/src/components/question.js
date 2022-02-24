@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Highlighter from "react-highlight-words";
 import * as config from './config';
 
-import { convertDate, sanitizeWords, generateSearchWords } from './utils'
+import { convertDate, sanitizeWords, generateHighlightedHtml } from './utils'
 
 class Question extends React.Component {
     constructor(props) {
@@ -59,12 +59,7 @@ class Question extends React.Component {
                                 {this.props.questionType == "questionOraleSansDebat" && "📢 Question orale d'un député au gouvernement"}
                             </div>
                             <div className="row entete">
-                                <Highlighter
-                                    searchWords={this.props.query == "" ? [] : generateSearchWords(this.props.query)}
-                                    sanitize={sanitizeWords}
-                                    textToHighlight={this.state.question.resume} />
-
-
+                                {<div dangerouslySetInnerHTML={{ __html: generateHighlightedHtml(this.state.question.resume, this.props.query, sanitizeWords) }}></div>}
                             </div>
                         </div>
                     </div>
@@ -77,10 +72,9 @@ class Question extends React.Component {
                         {this.state.displayQuestion &&
                             <div className="subResultBloc">
                                 <div className="col text-column-sub">
-                                    <Highlighter
-                                        searchWords={this.props.query == "" ? [] : generateSearchWords(this.props.query)}
-                                        sanitize={sanitizeWords}
-                                        textToHighlight={JSON.parse(this.state.question.question).texteQuestion.texte} />
+
+                                    <div dangerouslySetInnerHTML={{ __html: generateHighlightedHtml(JSON.parse(this.state.question.question).texteQuestion.texte, this.props.query, sanitizeWords) }}></div>
+
                                 </div>
                             </div>
 
@@ -98,19 +92,12 @@ class Question extends React.Component {
                         {(this.state.displayReponse && this.state.question.reponse !== null) &&
                             <div className="subResultBloc">
                                 <div className="col text-column-sub">
-
-                                    <Highlighter
-                                        searchWords={this.props.query == "" ? [] : generateSearchWords(this.props.query)}
-                                        sanitize={sanitizeWords}
-                                        textToHighlight={JSON.parse(this.state.question.reponse).texteReponse.texte} />
-
-
+                                    <div dangerouslySetInnerHTML={{ __html: generateHighlightedHtml(JSON.parse(this.state.question.reponse).texteReponse.texte, this.props.query, sanitizeWords) }}></div>
                                 </div>
                             </div>
 
 
                         }
-                        {/*this.state.displayEtapes && this.state.etapesLegislatives.map((data) => <EtapeLegislative key={data.uid} data={data} query={this.props.query} />)*/}
 
                     </div>
 

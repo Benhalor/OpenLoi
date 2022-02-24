@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Highlighter from "react-highlight-words";
 import * as config from './config';
 
-import { convertDate, sanitizeWords, generateSearchWords } from './utils'
+import { convertDate, sanitizeWords, generateHighlightedHtml } from './utils'
 
 class Debat extends React.Component {
     constructor(props) {
@@ -43,18 +43,13 @@ class Debat extends React.Component {
                                 📝 Débat en hémicyle d'un député avec le gouvernement
                             </div>
                             <div className="row entete">
-                                <Highlighter
-                                    searchWords={this.props.query == "" ? [] : generateSearchWords(this.props.query)}
-                                    sanitize={sanitizeWords}
-                                    textToHighlight={this.state.debat.resume} />
-
-
+                                {<div dangerouslySetInnerHTML={{ __html: generateHighlightedHtml(this.state.debat.resume, this.props.query, sanitizeWords) }}></div>}
                             </div>
                         </div>
                     </div>
 
                     <div className="col">
-                        
+
                         <div className="titleSubResultBloc cursor" onClick={this.changedisplayDebat.bind(this)}>
                             {(this.state.displayDebat && this.state.debat.dateReponse !== null) && "➖"}
                             {(!this.state.displayDebat && this.state.debat.dateReponse !== null) && "➕"}
@@ -68,13 +63,7 @@ class Debat extends React.Component {
                         {(this.state.displayDebat && this.state.debat.reponse !== null) &&
                             <div className="subResultBloc">
                                 <div className="col text-column-sub">
-
-                                    <Highlighter
-                                        searchWords={this.props.query == "" ? [] : generateSearchWords(this.props.query)}
-                                        sanitize={sanitizeWords}
-                                        textToHighlight={JSON.parse(this.state.debat.reponse).texteReponse.texte} />
-
-
+                                    {<div dangerouslySetInnerHTML={{ __html: generateHighlightedHtml(JSON.parse(this.state.debat.reponse).texteReponse.texte, this.props.query, sanitizeWords) }}></div>}
                                 </div>
                             </div>
 

@@ -8507,6 +8507,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"highlight-words@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "highlight-words@npm:1.2.0"
+  checksum: f1945369f805930311e972e891d6e0396958319e9aa0ad5a299b9fe2567d45bec9d9326de8ae782043b9995ca202d5038213fb539b818498f4956ffc97191c3a
+  languageName: node
+  linkType: hard
+
 "history@npm:^5.0.1, history@npm:^5.2.0":
   version: 5.2.0
   resolution: "history@npm:5.2.0"
@@ -11895,6 +11902,7 @@ __metadata:
     "@testing-library/jest-dom": ^5.11.4
     "@testing-library/react": ^11.1.0
     "@testing-library/user-event": ^12.1.10
+    highlight-words: ^1.2.0
     history: ^5.0.1
     plotly.js: ^2.5.1
     prop-types: ^15.7.2
@@ -11902,7 +11910,7 @@ __metadata:
     react-dom: ^17.0.2
     react-highlight-words: 0.17.0
     react-plotly.js: ^2.5.1
-    react-router-dom: ^6.0.0-beta.6
+    react-router-dom: ^6.2.1
     react-scripts: 4.0.3
     serve: ^12.0.1
     styled-components: ^5.3.1
@@ -13861,7 +13869,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom@npm:^6.0.0-beta.6":
+"react-router-dom@npm:^6.2.1":
   version: 6.2.1
   resolution: "react-router-dom@npm:6.2.1"
   dependencies:
