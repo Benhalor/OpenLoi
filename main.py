@@ -24,14 +24,14 @@ else:
         hostDatabase='localhost',
         portDatabase='5432',
         verbose=2,
-        setup=True)
+        setup=False)
 
 while True:
     r = assembleeNationale.downloadSources("AssembleeNationale/data/")
     assembleeNationale.processSources(
         "AssembleeNationale/data/", r["updatedSources"])
     print("Finished all dump")
-    time.sleep(3600)
+    time.sleep(7200)
 
 # Tests      
 print(assembleeNationale.search("test"))

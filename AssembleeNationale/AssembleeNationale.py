@@ -402,6 +402,26 @@ class AssembleeNationale:
             print("Upload QUESTIONS_ECRITES in "+str(time.time()-lastTime))
         elif sourceName == "REUNIONS":
             pass
+    
+    """__getUidList
+				Get list of uid of a table.
+                @params table : table name
+				@return : list of uid on the table
+
+	"""
+
+    def __getUidList(self, table):
+        connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
+                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection.autocommit = True
+        cursor = connection.cursor()
+        uidList = []
+        query = "SELECT uid FROM "+table + ";"
+        cursor.execute(query)
+        for entry in cursor.fetchall():
+            uidList.append(entry[0])
+        return uidList
+
 
     """__uploadToDb
 				Recursively explore the foler dossierLegislatif and upload to db
@@ -416,6 +436,8 @@ class AssembleeNationale:
                                       password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = False
         cursor = connection.cursor()
+
+        uidList = self.__getUidList(table)
 
         if table in self.__tableList:
             tableDefinition = self.__tableList[table]
@@ -435,10 +457,12 @@ class AssembleeNationale:
                         try:
                             doc = json.loads(text)
                             try:
-                                query = self.__buildQueryFromDef(
+                                query, uid = self.__buildQueryFromDef(
                                     doc, tableDefinition)
-                                cursor.execute(query)
-                                self.__jsonReadOK += 1
+                                if uid not in uidList:
+                                    cursor.execute(query)
+                                    self.__jsonReadOK += 1
+                                
                             except psycopg2.errors.UniqueViolation:
                                 pass
                             except KeyboardInterrupt:
@@ -464,6 +488,7 @@ class AssembleeNationale:
 	"""
 
     def __buildQueryFromDef(self, doc, tableDef):
+        uid = None
         query = ""
         query += "INSERT INTO "+tableDef["tableName"]+"("
         columnString = ""
@@ -534,6 +559,8 @@ class AssembleeNationale:
                                 self.__htmlEscape(docPath)+"\',"
                             columnString += columnName+","
                         else:
+                            if columnName == "uid":
+                                uid = docPath
                             valuesString += "\'"+docPath+"\',"
                             columnString += columnName+","
                 except KeyboardInterrupt:
@@ -542,7 +569,9 @@ class AssembleeNationale:
                     print(doc)
                     traceback.print_exc()
         query += columnString[:-1] + ") VALUES (" + valuesString[:-1]+");"
-        return query
+        if uid is None:
+            print("PROBLEM WITH UID")
+        return query, uid
 
     """search
 				search a term in tables
@@ -557,7 +586,8 @@ class AssembleeNationale:
                                       password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
-
+        
+        print( "Search "+term)
         processedQuery = term.replace("'", "\\'").replace("--", "")
 
         ret = {}
