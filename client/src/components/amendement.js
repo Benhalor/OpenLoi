@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Highlighter from "react-highlight-words";
+import AmendementDetail from './amendement_detail.js';
 import { convertDate, sanitizeWords, generateHighlightedHtml } from './utils'
 
 class Amendement extends React.Component {
@@ -43,7 +44,10 @@ class Amendement extends React.Component {
 
 
         return (
+            
+
             <div className="amendement">
+                
                 <div className="row" >
                     <div className="col text-column-amendement">
                         <div className="row cursor" onClick={this.changeDisplayAmendement.bind(this)}>
@@ -51,7 +55,7 @@ class Amendement extends React.Component {
                                 📝 {this.props.data.article} {this.props.data.alinea}  - déposé le {convertDate(this.props.data.dateDepot)} <span className="dossierStatus"> ▪ {this.extractStatus()}</span>
                             </div>
                             <div className="col left-align">
-                                <a className="btnAmendement" target="_blank" rel="noopener noreferrer" href={"https://www.assemblee-nationale.fr" + this.props.data.urlDivisionTexteVise}>Voir ↗</a>
+                                <a className="btnAmendement" target="_blank" rel="noopener noreferrer" href={"http://www.assemblee-nationale.fr/dyn/15/amendements/" + this.props.data.uid}>Voir ↗</a>
                             </div>
 
                         </div>
@@ -81,3 +85,7 @@ class Amendement extends React.Component {
 }
 
 export default Amendement
+
+
+/*                                <a className="btnAmendement" target="_blank" rel="noopener noreferrer" href={"https://www.assemblee-nationale.fr" + this.props.data.urlDivisionTexteVise}>Voir ↗</a>
+*/

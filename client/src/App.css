@@ -380,6 +380,15 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
   }
 
 
+  @media screen and (max-width: 800px) and (min-width: 601px){
+    html {
+        font-size: 78%;
+    }
+    .App-body,.App-header  {
+        max-width: 85vw;
+    }
+  }
+
   @media screen and (max-width: 900px) and (min-width: 801px){
     html {
         font-size: 85%;
@@ -434,4 +443,18 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
 
   .amendement mark {
       background-color: orangered;
+  }
+
+  .handle {
+      background-color: white;
+      padding: 5vh 0rem;
+        border-radius: 2rem;
+        border:1px;
+        text-align: center;
+        box-shadow: rgb(0 0 0 / 8%) 0px 0.3rem 0.25rem;
+        margin-top : 2vh;
+        margin-bottom : 2vh;
+        margin-left : 2vh;
+        margin-right : 2vh;
+        z-index: 1; /* Sit on top */
   }
