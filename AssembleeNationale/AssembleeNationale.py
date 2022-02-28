@@ -779,6 +779,37 @@ class AssembleeNationale:
             traceback.print_exc()
         return count, listOfQuestions
 
+    
+    """__listOfMostRecentQuestions
+				Generate a list of most recetn questions
+
+	"""
+
+    def __listOfMostRecentQuestions(self, cursor, maxNumberOfResults, tableName, initialList=[]):
+
+        listOfQuestions = []
+        count = 0
+
+        query = "SELECT uid, dateQuestion " \
+            "FROM " + tableName + " "\
+            "ORDER by dateQuestion DESC LIMIT %s;"
+
+        try:
+            cursor.execute(query, (maxNumberOfResults,))
+            for entry in cursor.fetchall():
+                entryData = {}
+                entryData["uid"] = entry[0]
+                entryData["score"] = 0
+                if not any(di['uid'] == entryData["uid"] for di in listOfQuestions+initialList):
+                    listOfQuestions.append(
+                        {"uid": entryData["uid"], "score": entryData["score"]}
+                    )
+                    count += 1
+        except:
+            traceback.print_exc()
+        return count, listOfQuestions
+
+
     """getLastNews
 				returns last news
                 @params maxNumberOfResults : max number of results to return
@@ -786,7 +817,7 @@ class AssembleeNationale:
 
 	"""
 
-    def getLastNews(self, maxNumberOfResults=10):
+    def getLastNews(self, maxNumberOfResults=5):
         connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
                                       password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
@@ -794,6 +825,10 @@ class AssembleeNationale:
 
         ret = {}
         ret["listOfDossiersLegislatifs"] = []
+        ret["listOfQuestionsEcrites"] = []
+        ret["listOfQuestionsOralesSansDebat"] = []
+        ret["listOfQuestionsAuGouvernement"] = []
+        ret["listOfResults"] = []
         ret["count"] = 0
         ret["query"] = ""
 
@@ -801,7 +836,6 @@ class AssembleeNationale:
         tableDef = self.__dossierLegislatifDossierParlementaireTableDefinition
 
         count = 0
-
         # Get the list of documents legislatifs refs
         ret["listOfDossiersLegislatifs"] = []
         query = "SELECT DISTINCT(DOSSIERS_LEGISLATIFS_DOCUMENT.dossierRef) dateDepot FROM AMENDEMENT \
@@ -816,12 +850,50 @@ class AssembleeNationale:
         except:
             traceback.print_exc()
 
-        ret["count"] = count
-        ret["listOfDossiersLegislatifs"] = ret["listOfDossiersLegislatifs"][:maxNumberOfResults]
-        ret["listOfResults"] = []
-        for dossier in ret["listOfDossiersLegislatifs"]:
-            ret["listOfResults"].append(
-                {"type": "dossierLegislatif", "uid": dossier, "score": 0})
+        ret["count"] += count
+        listOfdossierLegislatif = ret["listOfDossiersLegislatifs"]
+
+        # ------------------------------------------------------
+        # Then get the results for questions écrites
+        count, listOfQuestionsEcrites = self.__listOfMostRecentQuestions(
+            cursor, maxNumberOfResults, "QUESTIONS_ECRITES")
+        ret["count"] += count
+        ret["listOfQuestionsEcrites"].extend(listOfQuestionsEcrites)
+
+        # ------------------------------------------------------
+        # Then get the results for questions orales sans debat
+        count, listOfQuestionsOralesSansDebat = self.__listOfMostRecentQuestions(
+            cursor, maxNumberOfResults, "QUESTIONS_ORALES_SANS_DEBAT")
+        ret["count"] += count
+        ret["listOfQuestionsOralesSansDebat"].extend(
+            listOfQuestionsOralesSansDebat)
+
+        # ------------------------------------------------------
+        # Then get the results for questions au gouvernement (avec debat)
+        count, listOfQuestionsAuGouvernement = self.__listOfMostRecentQuestions(
+            cursor, maxNumberOfResults, "QUESTIONS_AU_GOUVERNEMENT")
+        ret["count"] += count
+        ret["listOfQuestionsAuGouvernement"].extend(
+            listOfQuestionsAuGouvernement)
+
+        tempResult = []
+        # Gather all results and give them a type key.
+        for questionEcrite in listOfQuestionsEcrites:
+            tempResult.append(
+                {"type": "questionEcrite", "uid": questionEcrite["uid"], "score": questionEcrite["score"]})
+        for questionOraleSansDebat in listOfQuestionsOralesSansDebat:
+            tempResult.append(
+                {"type": "questionOraleSansDebat", "uid": questionOraleSansDebat["uid"], "score": questionOraleSansDebat["score"]})
+        for dossierLegislatif in listOfdossierLegislatif:
+            tempResult.append(
+                {"type": "dossierLegislatif", "uid": dossierLegislatif, "score": 0})
+        for questionAuGouvernement in listOfQuestionsAuGouvernement:
+            tempResult.append(
+                {"type": "questionAuGouvernement", "uid": questionAuGouvernement["uid"], "score": questionAuGouvernement["score"]})
+
+        
+        ret["listOfResults"].extend(tempResult)
+
         connection.close()
         return json.dumps(ret)
 
