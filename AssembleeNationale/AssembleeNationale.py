@@ -462,7 +462,6 @@ class AssembleeNationale:
                                 if uid not in uidList:
                                     cursor.execute(query)
                                     self.__jsonReadOK += 1
-                                
                             except psycopg2.errors.UniqueViolation:
                                 pass
                             except KeyboardInterrupt:
