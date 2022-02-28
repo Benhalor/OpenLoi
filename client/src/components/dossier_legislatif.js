@@ -83,7 +83,7 @@ class DossierLegislatif extends React.Component {
 
 
                             </div>
-                            <div className="row entete cursor" onClick={this.changeDisplayEtapes.bind(this)}>
+                            <div className="row entete hovergrey cursor" onClick={this.changeDisplayEtapes.bind(this)}>
                             
                                 <Highlighter
                                     searchWords={this.props.query == "" ? [] : generateSearchWords(this.props.query)}

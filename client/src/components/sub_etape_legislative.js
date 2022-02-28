@@ -172,7 +172,7 @@ class SubEtapeLegislative extends React.Component {
                             {/*Button for show/hide amendements*/}
                             <div className={(this.state.amendements != null && this.state.amendements.numberOfAmendement != 0) ? "row voirAmendements " : ""} >
                                 {(this.state.amendements != null && this.state.amendements.numberOfAmendement != 0)
-                                    && <div className="cursor showAmendements" onClick={this.changedisplayAmendements.bind(this)}>
+                                    && <div className="cursor hoverclear showAmendements" onClick={this.changedisplayAmendements.bind(this)}>
                                         {this.state.displayAmendements ? "Voir " : "Voir "} {this.state.amendements.numberOfAmendement} amendements {this.state.displayAmendements ? "⬇ " : "⬆ "}
                                     </div>
 

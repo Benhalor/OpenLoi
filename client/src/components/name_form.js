@@ -42,6 +42,7 @@ class NameForm extends React.Component {
       .then(response => response.json())
       .then(
         (result) => {
+          console.log(result)
           this.props.pullResults(result)
 
         }

@@ -50,7 +50,7 @@ class Amendement extends React.Component {
                 
                 <div className="row" >
                     <div className="col text-column-amendement">
-                        <div className="row cursor" onClick={this.changeDisplayAmendement.bind(this)}>
+                        <div className="row hoverclear cursor" onClick={this.changeDisplayAmendement.bind(this)}>
                             <div className="col enteteAmendement">
                                 📝 {this.props.data.article} {this.props.data.alinea}  - déposé le {convertDate(this.props.data.dateDepot)} <span className="dossierStatus"> ▪ {this.extractStatus()}</span>
                             </div>

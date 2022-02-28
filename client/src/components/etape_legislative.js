@@ -55,7 +55,7 @@ class EtapeLegislative extends React.Component {
         return (
             <div className="subResultBloc">
                 <div className="col text-column-sub">
-                    <div className="col cursor" onClick={this.changeDisplayEtapeLegislative.bind(this)}>
+                    <div className="col hovergrey cursor" onClick={this.changeDisplayEtapeLegislative.bind(this)}>
                         <div className="row entete" >
                             <div className="col">
                                 {this.state.displayEtapeLegislative ? "➖" : "➕"} {this.extractDossierStatus(this.props.data)}

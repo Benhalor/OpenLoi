@@ -204,6 +204,11 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
 
 }
 
+.hovergrey:hover {
+    background-color: rgb(222, 226, 230);
+
+}
+
 .text-column {
     text-align: justify ;
     padding-right:3rem;
@@ -296,7 +301,7 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
     font-size: 1.2rem;
 }
 
-.cursor:hover {
+.hoverclear:hover {
     /*background-color: rgba(117, 190, 218, 0.2);*/
     background-color: rgba(255, 255, 255, 0.5);
   }
