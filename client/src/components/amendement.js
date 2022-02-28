@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import Highlighter from "react-highlight-words";
-import AmendementDetail from './amendement_detail.js';
+//import AmendementDetail from './amendement_detail.js';
 import { convertDate, sanitizeWords, generateHighlightedHtml } from './utils'
 
 class Amendement extends React.Component {
