@@ -791,7 +791,7 @@ class AssembleeNationale:
 
         query = "SELECT uid, dateQuestion, dateReponse " \
             "FROM " + tableName + " "\
-            "ORDER BY GREATEST (COALESCE(dateReponse,'(1/01/1970)'), COALESCE(dateQuestion,'(1/01/1970)')) DESC  LIMIT %s;"
+            "ORDER BY GREATEST (COALESCE(dateReponse,'(01/01/1970)'), COALESCE(dateQuestion,'(01/01/1970)')) DESC  LIMIT %s;"
 
         try:
             cursor.execute(query, (maxNumberOfResults,))
