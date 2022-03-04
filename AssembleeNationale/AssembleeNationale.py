@@ -508,7 +508,7 @@ class AssembleeNationale:
                     columnString += columnName+","
                     valuesString += "TO_DATE(\'"+date+"\' , \'DD/MM/YYYY\'),"
             elif "QUESTION" in tableDef["tableName"] and columnName == "dateQuestion":
-                # Sometimes there are multiple question in a list. In this case, take the last date. Moreover, date format is not standard
+                # Sometimes, there is no question. Sometimes there are multiple question in a list. In this case, take the last date. Moreover, date format is not standard
                 if "textesQuestion" in doc["question"].keys():
                     if type(doc["question"]["textesQuestion"]["texteQuestion"]) is list:
                         date = doc["question"]["textesQuestion"]["texteQuestion"][-1]["infoJO"]["dateJO"]
@@ -540,19 +540,35 @@ class AssembleeNationale:
                                 valuesString += "\'"+docPath+"\',"
                                 columnString += columnName+","
                             except ValueError:
+                                #traceback.print_exc()
                                 pass
                             except KeyboardInterrupt:
                                 sys.exit(0)
                         elif columnDef["type"] == "TIMESTAMP WITH TIME ZONE":
+                            timestampOK = False
+                            # Check that format of timestamp is OL
                             try:
                                 datetime.datetime.strptime(
                                     docPath, "%Y-%m-%dT%H:%M:%S%z")
-                                valuesString += "\'"+docPath+"\',"
-                                columnString += columnName+","
+                                timestampOK = True
                             except ValueError:
                                 pass
                             except KeyboardInterrupt:
                                 sys.exit(0)
+                            try:
+                                datetime.datetime.strptime(
+                                    docPath, "%Y-%m-%dT%H:%M:%S.%f%z")
+                                timestampOK = True
+                            except ValueError:
+                                pass
+                            except KeyboardInterrupt:
+                                sys.exit(0)
+
+                            # If OK, add to fields.
+                            if timestampOK:
+                                valuesString += "\'"+docPath+"\',"
+                                columnString += columnName+","
+
                         elif columnDef["htmlEscape"]:
                             valuesString += "\'" + \
                                 self.__htmlEscape(docPath)+"\',"
@@ -791,7 +807,7 @@ class AssembleeNationale:
 
         query = "SELECT uid, dateQuestion, dateReponse " \
             "FROM " + tableName + " "\
-            "ORDER BY GREATEST (COALESCE(dateReponse,'(01/01/1970)'), COALESCE(dateQuestion,'(01/01/1970)')) DESC  LIMIT %s;"
+            "ORDER BY GREATEST (COALESCE(dateReponse,'(1970/01/01)'), COALESCE(dateQuestion,'(1970/01/01)')) DESC  LIMIT %s;"
 
         try:
             cursor.execute(query, (maxNumberOfResults,))
