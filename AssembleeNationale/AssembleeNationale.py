@@ -297,13 +297,13 @@ class AssembleeNationale:
 
 	"""
 
-    def processSources(self, dataDirectory, sourceList):
+    def processSources(self, dataDirectory, sourceList, replace=False):
 
         for path in sourceList:
             if path[-9:] == "excel.csv":
                 pass  # self.__processExcelCsv(path)
             if path[-3:] == "zip":
-                self.__processZip(path)
+                self.__processZip(path, replace=replace)
 
     """__processExcelCsv
 			Process files that have a csv format
@@ -337,6 +337,7 @@ class AssembleeNationale:
                 shutil.rmtree(directoryToExtract)
                 self.__debugPrint("Finished", level=1)
         except:
+            traceback.print_exc()
             pass
 
         # Extract zip
@@ -402,7 +403,7 @@ class AssembleeNationale:
             print("Upload QUESTIONS_ECRITES in "+str(time.time()-lastTime))
         elif sourceName == "REUNIONS":
             pass
-    
+
     """__getUidList
 				Get list of uid of a table.
                 @params table : table name
@@ -421,7 +422,6 @@ class AssembleeNationale:
         for entry in cursor.fetchall():
             uidList.append(entry[0])
         return uidList
-
 
     """__uploadToDb
 				Recursively explore the foler dossierLegislatif and upload to db
@@ -585,8 +585,8 @@ class AssembleeNationale:
                                       password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
-        
-        print( "Search "+term)
+
+        print("Search "+term)
         processedQuery = term.replace("'", "\\'").replace("--", "")
 
         ret = {}
@@ -779,7 +779,6 @@ class AssembleeNationale:
             traceback.print_exc()
         return count, listOfQuestions
 
-    
     """__listOfMostRecentQuestions
 				Generate a list of most recetn questions
 
@@ -790,9 +789,9 @@ class AssembleeNationale:
         listOfQuestions = []
         count = 0
 
-        query = "SELECT uid, dateQuestion " \
+        query = "SELECT uid, dateQuestion, dateReponse " \
             "FROM " + tableName + " "\
-            "ORDER by dateQuestion DESC LIMIT %s;"
+            "ORDER BY GREATEST (COALESCE(dateReponse,'(1/01/1970)'), COALESCE(dateQuestion,'(1/01/1970)')) DESC  LIMIT %s;"
 
         try:
             cursor.execute(query, (maxNumberOfResults,))
@@ -808,7 +807,6 @@ class AssembleeNationale:
         except:
             traceback.print_exc()
         return count, listOfQuestions
-
 
     """getLastNews
 				returns last news
@@ -891,7 +889,6 @@ class AssembleeNationale:
             tempResult.append(
                 {"type": "questionAuGouvernement", "uid": questionAuGouvernement["uid"], "score": questionAuGouvernement["score"]})
 
-        
         ret["listOfResults"].extend(tempResult)
 
         connection.close()

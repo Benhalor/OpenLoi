@@ -29,7 +29,7 @@ else:
 while True:
     r = assembleeNationale.downloadSources("AssembleeNationale/data/")
     assembleeNationale.processSources(
-        "AssembleeNationale/data/", r["updatedSources"])
+        "AssembleeNationale/data/", r["updatedSources"], replace=True)
     print("Finished all dump")
     time.sleep(7200)
 
