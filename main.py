@@ -3,11 +3,14 @@ import sys
 import time
 
 sys.path.append('AssembleeNationale')
-sys.path.append('Senat')
-import Senat
+
+
 import AssembleeNationale
 
-"""senat = Senat.Senat(
+"""sys.path.append('Senat')
+import Senat
+
+senat = Senat.Senat(
     database='postgres',
     userDatabase='postgres',
     passwordDatabase='password',
@@ -15,9 +18,9 @@ import AssembleeNationale
     portDatabase='5432',
     verbose=2)
 
-senat.reloadDatabase("Senat/data/")"""
+senat.reloadDatabase("Senat/data/")
 
-
+1/0"""
 if os.getenv("POSTGRESQL_ADDON_DB") is not None:
     # Clever cloud
     assembleeNationale = AssembleeNationale.AssembleeNationale(
