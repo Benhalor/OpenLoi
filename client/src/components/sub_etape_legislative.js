@@ -83,7 +83,7 @@ class SubEtapeLegislative extends React.Component {
     }
 
     getAmendements(uid) {
-        fetch(config.apiUrl + 'amendements/' + uid)
+        fetch(config.apiUrl + 'amendements/uid='+uid+'&assemblee=an')
             .then(response => response.json())
             .then(
                 (result) => {

@@ -54,7 +54,6 @@ class Question extends React.Component {
                     <div className="row result-bloc-row">
                         <div className="col text-column">
                             <div className="row">
-
                                 {this.props.questionType == "questionEcrite" && "📝 Question écrite d'un député au gouvernement"}
                                 {this.props.questionType == "questionOraleSansDebat" && "📢 Question orale d'un député au gouvernement"}
                             </div>

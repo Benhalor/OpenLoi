@@ -7,7 +7,7 @@ sys.path.append('AssembleeNationale')
 
 import AssembleeNationale
 
-"""sys.path.append('Senat')
+sys.path.append('Senat')
 import Senat
 
 senat = Senat.Senat(
@@ -18,9 +18,9 @@ senat = Senat.Senat(
     portDatabase='5432',
     verbose=2)
 
-senat.reloadDatabase("Senat/data/")
 
-1/0"""
+
+
 if os.getenv("POSTGRESQL_ADDON_DB") is not None:
     # Clever cloud
     assembleeNationale = AssembleeNationale.AssembleeNationale(
@@ -45,10 +45,7 @@ else:
 r = assembleeNationale.downloadSources("AssembleeNationale/data/")
 assembleeNationale.processSources(
     "AssembleeNationale/data/", r["updatedSources"], replace=True)
-print("Finished all dump")
 
-# Tests
-print(assembleeNationale.search("test"))
-print(assembleeNationale.getDossierLegislatifByUid("DLR5L15N37471"))
-assembleeNationale.getDossierLegislatifdocumentsByUid("PIONANR5L15B3619")
-print(assembleeNationale.getAmendementsByUid("PNREANR5L15B0480"))
+senat.reloadDatabase("Senat/data/")
+
+print("Finished all dump")

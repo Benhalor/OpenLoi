@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import Highlighter from "react-highlight-words";
-import DocumentLegislatif from './document_legislatif';
 import EtapeLegislative from './etape_legislative';
 import * as config from './config';
 
