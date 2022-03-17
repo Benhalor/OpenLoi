@@ -740,7 +740,8 @@ class AssembleeNationale:
 
         query = "SELECT dossierRef,ts_rank_cd(ts, to_tsquery('french',%s),2) AS score,dateCreation " \
             "FROM " + tableName + " "\
-            "WHERE ( ts @@ to_tsquery('french',%s))" \
+            "WHERE ( ts @@ to_tsquery('french',%s)" \
+            "AND (dateCreation >  CURRENT_DATE - INTERVAL '%s months'))" \
             "ORDER by score  DESC LIMIT %s;"
 
         count = 0
@@ -748,7 +749,7 @@ class AssembleeNationale:
         listOfdossierLegislatif = []
         try:
             cursor.execute(query, (processedQueryLogic,
-                           processedQueryLogic,  maxNumberOfResults,))
+                           processedQueryLogic, numberOfMonthsOld, maxNumberOfResults,))
             for entry in cursor.fetchall():
                 entryData = {}
                 entryData["dossierRef"] = entry[0]
