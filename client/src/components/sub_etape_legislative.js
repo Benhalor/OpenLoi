@@ -182,7 +182,6 @@ class SubEtapeLegislative extends React.Component {
                         </div>
 
                         <div className="col">
-                            {this.props.data.uid}
                             {/*Title of document legislatif*/}
                             {this.state.texteAssocie !== null &&
                                 <Highlighter
