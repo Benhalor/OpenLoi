@@ -1,8 +1,10 @@
 import os
 import io
-import sys
 import time
 import json
+
+import sys
+import fileinput
 import shutil
 import zipfile
 import traceback
@@ -57,15 +59,15 @@ class Senat:
         }
 
         self.__statusOfTextTable = {
-            1:"",
-            2:"",
-            3:"",
-            4:"",
-            5:"",
-            6:"",
-            7:"",
-            8:"",
-            9:"",
+            1: "",
+            2: "",
+            3: "",
+            4: "",
+            5: "",
+            6: "",
+            7: "",
+            8: "",
+            9: "",
             10: "Le Sénat a adopté",
             11: "Le Sénat a adopté définitivement",
             12: "Le Sénat n'a pas adopté",
@@ -75,15 +77,15 @@ class Senat:
         }
 
         self.__sortOfTextTable = {
-            "A":"Adopté",
-            "R":"Retiré",
-            "J":"Rejeté",
-            "K":"Rejeté - vote unique",
-            "N":"Non soutenu",
-            "S":"Tombé",
-            "B":"Adopté - vote unique",
-            "1":"Adopté",
-            "2":"Adopté avec modification",
+            "A": "Adopté",
+            "R": "Retiré",
+            "J": "Rejeté",
+            "K": "Rejeté - vote unique",
+            "N": "Non soutenu",
+            "S": "Tombé",
+            "B": "Adopté - vote unique",
+            "1": "Adopté",
+            "2": "Adopté avec modification",
             "3": "Rejeté",
             "4": "Retiré",
             "5": "Satisfait ou sans objet",
@@ -152,6 +154,11 @@ class Senat:
             copyCommand = ""
             i = 0
             for line in dbExport:
+                # Some column are too small. This piece of code update sizes.
+                line = line.replace("\"int\" character varying(80)", "\"int\" character varying(150)")
+                line = line.replace("inl character varying(720)", "inl character varying(1500)")
+                
+
                 i += 1
                 if line[0:4] == "COPY":
                     copyMode = True
@@ -163,6 +170,7 @@ class Senat:
                         cursor.copy_expert(
                             copyCommand, io.StringIO(copyBuffer))
                     except:
+                        traceback.print_exc()
                         pass  # traceback.print_exc()
                     copyBuffer = ""
                     copyCommand = ""
@@ -181,10 +189,10 @@ class Senat:
                         commandBuffer = ""
 
         # Connect on the database and upload db
-        cursor.execute("SELECT txtid FROM amd LIMIT 10")
+        """cursor.execute("SELECT * FROM txt_ameli")
 
         for element in cursor.fetchall():
-            print(element)
+            print(element)"""
 
         connection.close()
 
@@ -197,11 +205,21 @@ class Senat:
 
 	"""
 
-    def getAmendementsByUid(self, uid,  maxNumberOfAmendement=10):
+    def getAmendementsByUid(self, id, projectId,  maxNumberOfAmendement=10):
         connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
                                       password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
         connection.autocommit = True
         cursor = connection.cursor()
+
+        # First find amendement ID... because it is not referenced in the assemble nationale JSON, we have to to magic...
+        query = "SELECT id, num, doslegsignet FROM txt_ameli WHERE (num::INTEGER)=%s AND doslegsignet=%s "
+        try:
+            cursor.execute(query, (id, projectId, ))
+            uid = cursor.fetchall()[0][0]
+
+        except:
+            traceback.print_exc()
+            pass
 
         ret = {}
         tableDef = self.__amendementTableDefinition
@@ -211,7 +229,8 @@ class Senat:
             if tableDef["schema"][key]["path"] != "":
                 query += tableDef["schema"][key]["path"] + ","
         query = query[:-1]
-        query += ", irrsaisiepar FROM "+tableDef["tableName"]+ " WHERE txtid=%s ORDER BY datdep DESC;"
+        query += ", irrsaisiepar FROM " + \
+            tableDef["tableName"] + " WHERE txtid=%s ORDER BY datdep DESC;"
         print(query)
         try:
             cursor.execute(query, (uid,))
@@ -224,7 +243,7 @@ class Senat:
                             entryData[key] = str(entry[i])
                         else:
                             entryData[key] = entry[i]
-                        i+=1
+                        i += 1
                     else:
                         entryData[key] = ""
                 recevabilite = entry[i]
@@ -239,12 +258,13 @@ class Senat:
         # post processing
         for amendement in ret["amendements"]:
             if amendement["etat"] is not None:
-                    amendement["etat"] = self.__statusOfTextTable[amendement["etat"]]
+                amendement["etat"] = self.__statusOfTextTable[amendement["etat"]]
             if amendement["sort"] is not None:
                 amendement["sort"] = self.__sortOfTextTable[amendement["sort"]]
             for senateur in self.getSenateursOfAmendement(amendement["uid"]):
-                amendement["signataires"]+= senateur["qua"] + " " + senateur["prenomuse"] + " " + senateur["nomuse"]
-                
+                amendement["signataires"] += senateur["qua"] + " " + \
+                    senateur["prenomuse"] + " " + senateur["nomuse"]
+
         connection.close()
         return ret
 
@@ -262,7 +282,8 @@ class Senat:
 			Private method that get the list of senateurs of an amendement
 			@params amendementUid : id of the amendement
 			@returns : list of dictionnary of senateurs
-	"""    
+	"""
+
     def getSenateursOfAmendement(self, amendementUid):
         connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
                                       password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
@@ -280,13 +301,12 @@ class Senat:
             cursor.execute(query, (amendementUid,))
             for entry in cursor.fetchall():
                 entryData = {}
-                i=0
+                i = 0
                 for column in listOfColumns:
                     entryData[column] = entry[i]
-                    i+=1
+                    i += 1
                 listOfSenateurs.append(entryData)
         except:
             traceback.print_exc()
             pass
         return listOfSenateurs
-

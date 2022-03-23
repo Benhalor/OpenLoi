@@ -64,7 +64,7 @@ class EtapeLegislative extends React.Component {
                     </div>
                     <div className="col">
 
-                        {(this.state.displayEtapeLegislative && this.state.subEtapesLegislatives !== null) &&this.state.subEtapesLegislatives.map((data) => <SubEtapeLegislative key={data.uid} data={data} query={this.props.query} />)}
+                        {(this.state.displayEtapeLegislative && this.state.subEtapesLegislatives !== null) &&this.state.subEtapesLegislatives.map((data) => <SubEtapeLegislative key={data.uid} data={data} query={this.props.query} senatChemin={this.props.senatChemin} />)}
 
                     </div>
 

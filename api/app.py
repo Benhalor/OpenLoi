@@ -150,22 +150,25 @@ def getDossierLegislatif(uid):
         abort(405)
 
 
-@app.route("/api/amendements/uid=<string:uid>&assemblee=<string:assemblee>", methods=['GET'])
-def getAmendements(uid, assemblee):
+@app.route("/api/amendementsAN/uid=<string:uid>", methods=['GET'])
+def getAmendementsAN(uid):
     if request.method == 'GET':
-        lastTime = time.time()
-        if assemblee == "an":
-            ret = assembleeNationale.getAmendementsByUid(uid)
-        elif assemblee == "senat":
-            ret = senat.getAmendementsByUid(uid)
-        else:
-            abort(405)
+        ret = assembleeNationale.getAmendementsByUid(uid)
         return ret
 
     else:
         # 405 Method Forbidden
         abort(405)
 
+@app.route("/api/amendementsSenat/id=<string:id>&projectId=<string:projectId>", methods=['GET'])
+def getAmendementsSenat(id, projectId):
+    if request.method == 'GET':
+        ret = senat.getAmendementsByUid(394, "pjl21-350")
+        return ret
+
+    else:
+        # 405 Method Forbidden
+        abort(405)
 
 @app.route("/api/amendementsQuery/<string:query>&<string:uid>", methods=['GET'])
 def getAmendementsQuery(uid, query):

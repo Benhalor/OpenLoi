@@ -3,14 +3,13 @@ import Highlighter from "react-highlight-words";
 import Amendement from './amendement'
 import { convertDate, sanitizeWords, generateSearchWords, firstLetterUppercase } from './utils'
 import * as config from './config';
-import NameForm from './name_form';
 
 class SubEtapeLegislative extends React.Component {
     constructor(props) {
         super(props);
         this.state = { texteAssocie: null, amendements: null, amendementsQuery: null, dateActe: null, userQuery: "" };
         this.getAssociatedDocument()
-        //console.log(this.state.data)
+        console.log(this.props.senatChemin.split("/").slice(-1)[0].slice(0, -5))
     }
 
     getAssociatedDocument() {
@@ -21,7 +20,7 @@ class SubEtapeLegislative extends React.Component {
                 .then(
                     (result) => {
                         this.setState({ texteAssocie: result })
-                        this.getAmendements(result.uid)
+                        this.getAmendements(result.uid, this.props.data.codeActe)
                     }
 
                 )
@@ -34,6 +33,7 @@ class SubEtapeLegislative extends React.Component {
                 lastEtape = this.props.data.actesLegislatifs.acteLegislatif
             }
             this.state.dateActe = lastEtape.dateActe
+            // TODO placer ici les discussions en séance publique.
             //console.log(lastEtape)
         } else if (this.props.data.libelleActe.nomCanonique == "Travaux des commissions") {
             try {
@@ -50,13 +50,13 @@ class SubEtapeLegislative extends React.Component {
                     .then(
                         (result) => {
                             this.setState({ texteAssocie: result })
-                            this.getAmendements(result.uid)
+                            this.getAmendements(result.uid, this.props.data.codeActe)
                         }
 
                     )
             } catch (error) {
                 console.error(error);
-                console.log( this.props.data)
+                console.log(this.props.data)
             }
 
 
@@ -73,7 +73,7 @@ class SubEtapeLegislative extends React.Component {
                 .then(
                     (result) => {
                         this.setState({ texteAssocie: result })
-                        this.getAmendements(result.uid)
+                        this.getAmendements(result.uid, this.props.data.codeActe)
                     }
 
                 )
@@ -82,16 +82,30 @@ class SubEtapeLegislative extends React.Component {
 
     }
 
-    getAmendements(uid) {
-        fetch(config.apiUrl + 'amendements/uid='+uid+'&assemblee=an')
-            .then(response => response.json())
-            .then(
-                (result) => {
-                    this.setState({ amendements: result })
+    getAmendements(uid, codeActe) {
+        if (codeActe.slice(0, 2) == "AN") {
+            fetch(config.apiUrl + 'amendementsAN/uid=' + uid)
+                .then(response => response.json())
+                .then(
+                    (result) => {
+                        this.setState({ amendements: result })
 
-                }
+                    }
 
-            )
+                )
+        } else if (codeActe.slice(0, 2) == "SN") {
+            var projectId = this.props.senatChemin.split("/").slice(-1)[0].slice(0, -5) // something like pjl21-350
+            fetch(config.apiUrl + 'amendementsSenat/id=' + uid+'&projectId='+projectId)
+                .then(response => response.json())
+                .then(
+                    (result) => {
+                        this.setState({ amendements: result })
+
+                    }
+
+                )
+        }
+
     }
 
     updateAmendementsQuery(event) {
@@ -160,7 +174,7 @@ class SubEtapeLegislative extends React.Component {
                         </div>
 
                         <div className="col">
-
+                            {this.props.data.uid}
                             {/*Title of document legislatif*/}
                             {this.state.texteAssocie !== null &&
                                 <Highlighter
@@ -168,6 +182,7 @@ class SubEtapeLegislative extends React.Component {
                                     sanitize={sanitizeWords}
                                     textToHighlight={firstLetterUppercase(this.state.texteAssocie.titrePrincipal)} />
                             }
+
 
                             {/*Button for show/hide amendements*/}
                             <div className={(this.state.amendements != null && this.state.amendements.numberOfAmendement != 0) ? "row voirAmendements " : ""} >

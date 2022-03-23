@@ -88,6 +88,7 @@ class DossierLegislatif extends React.Component {
                                     searchWords={this.props.query == "" ? [] : generateSearchWords(this.props.query)}
                                     sanitize={sanitizeWords}
                                     textToHighlight={this.state.dossierLegislatif.titre} />
+                                    {this.state.dossierLegislatif.uid}
 
 
                             </div>
@@ -106,13 +107,22 @@ class DossierLegislatif extends React.Component {
                             }
 
                             <div className="uid">
-                                {this.props.dossierUid}
+                            {
+                                this.state.dossierLegislatif.senatChemin === null
+                                    ? <a >
+                                        ---
+                                    </a>
+                                    : <a  target="_blank" rel="noopener noreferrer" href={this.state.dossierLegislatif.senatChemin}>
+                                        Site du Sénat
+                                    </a>
+                            }
+                                
 
                             </div>
                         </div>
                     </div>
                     <div className="col">
-                        {this.state.displayEtapes && this.state.etapesLegislatives.map((data) => <EtapeLegislative key={data.uid} data={data} query={this.props.query} />)}
+                        {this.state.displayEtapes && this.state.etapesLegislatives.map((data) => <EtapeLegislative key={data.uid} data={data} query={this.props.query} senatChemin={this.state.dossierLegislatif.senatChemin} />)}
 
                     </div>
 
