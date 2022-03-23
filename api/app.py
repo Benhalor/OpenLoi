@@ -163,7 +163,7 @@ def getAmendementsAN(uid):
 @app.route("/api/amendementsSenat/id=<string:id>&projectId=<string:projectId>", methods=['GET'])
 def getAmendementsSenat(id, projectId):
     if request.method == 'GET':
-        ret = senat.getAmendementsByUid(394, "pjl21-350")
+        ret = senat.getAmendementsByUid(id, projectId)
         return ret
 
     else:

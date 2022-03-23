@@ -231,7 +231,6 @@ class Senat:
         query = query[:-1]
         query += ", irrsaisiepar FROM " + \
             tableDef["tableName"] + " WHERE txtid=%s ORDER BY datdep DESC;"
-        print(query)
         try:
             cursor.execute(query, (uid,))
             for entry in cursor.fetchall():
@@ -247,7 +246,6 @@ class Senat:
                     else:
                         entryData[key] = ""
                 recevabilite = entry[i]
-                print(recevabilite)
                 ret["amendements"].append(entryData)
         except:
             traceback.print_exc()
@@ -259,8 +257,12 @@ class Senat:
         for amendement in ret["amendements"]:
             if amendement["etat"] is not None:
                 amendement["etat"] = self.__statusOfTextTable[amendement["etat"]]
+            else:
+                amendement["etat"] = ""
             if amendement["sort"] is not None:
                 amendement["sort"] = self.__sortOfTextTable[amendement["sort"]]
+            else:
+                amendement["sort"] = ""
             for senateur in self.getSenateursOfAmendement(amendement["uid"]):
                 amendement["signataires"] += senateur["qua"] + " " + \
                     senateur["prenomuse"] + " " + senateur["nomuse"]

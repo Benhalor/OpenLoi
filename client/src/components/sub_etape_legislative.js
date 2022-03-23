@@ -94,16 +94,24 @@ class SubEtapeLegislative extends React.Component {
 
                 )
         } else if (codeActe.slice(0, 2) == "SN") {
-            var projectId = this.props.senatChemin.split("/").slice(-1)[0].slice(0, -5) // something like pjl21-350
-            fetch(config.apiUrl + 'amendementsSenat/id=' + uid+'&projectId='+projectId)
-                .then(response => response.json())
-                .then(
-                    (result) => {
-                        this.setState({ amendements: result })
+            var projectId
+            var id
+            try {
+                projectId = this.props.senatChemin.split("/").slice(-1)[0].slice(0, -5) // something like pjl21-350
+                id = uid.slice(-4)
+                fetch(config.apiUrl + 'amendementsSenat/id=' + id + '&projectId=' + projectId)
+                    .then(response => response.json())
+                    .then(
+                        (result) => {
+                            this.setState({ amendements: result })
 
-                    }
+                        }
 
-                )
+                    )
+            } catch {
+
+            }
+
         }
 
     }
