@@ -5,3 +5,4 @@ requests==2.25.1
 Flask==2.0.2
 Flask-Cors==3.0.10
 Flask-PyMongo==2.3.0
+xmltodict==0.12.0

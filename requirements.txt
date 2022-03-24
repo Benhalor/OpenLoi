@@ -3,3 +3,5 @@ zipp==1.0.0
 jsonschema==3.2.0
 requests==2.25.1
 Flask==2.0.3
+xmltodict==0.12.0
+

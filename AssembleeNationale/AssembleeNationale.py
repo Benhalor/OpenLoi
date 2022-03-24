@@ -4,6 +4,7 @@ import time
 import json
 import shutil
 import zipfile
+import xmltodict
 import traceback
 import datetime
 import psycopg2
@@ -26,16 +27,25 @@ class AssembleeNationale:
 
         self.__verbose = verbose
         self.__sourceList = {
+            "DEBATS_EN_SEANCE_PUBLIQUE": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/vp/syceronbrut/syseron.xml.zip", "pollingFrequency": 6000},
+            "REUNIONS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/vp/reunions/Agenda_XV.json.zip", "pollingFrequency": 6000},
             "DOSSIERS_LEGISLATIFS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/dossiers_legislatifs/Dossiers_Legislatifs_XV.json.zip", "pollingFrequency": 6000},
             "AGENDA": {"link": "http://data.assemblee-nationale.fr/static/openData/repository/15/vp/seances/seances_publique_excel.csv", "pollingFrequency": 6000},
-            "DEBATS_EN_SEANCE_PUBLIQUE": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/vp/syceronbrut/syseron.xml.zip", "pollingFrequency": 6000},
             "VOTES": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/scrutins/Scrutins_XV.json.zip", "pollingFrequency": 6000},
             "QUESTIONS_AU_GOUVERNEMENT": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_gouvernement/Questions_gouvernement_XV.json.zip", "pollingFrequency": 6000},
             "QUESTIONS_ORALES_SANS_DEBAT": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_orales_sans_debat/Questions_orales_sans_debat_XV.json.zip", "pollingFrequency": 6000},
             "QUESTIONS_ECRITES": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/questions/questions_ecrites/Questions_ecrites_XV.json.zip", "pollingFrequency": 6000},
-            "REUNIONS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/vp/reunions/Agenda_XV.json.zip", "pollingFrequency": 6000},
             "AMENDEMENTS": {"link": "https://data.assemblee-nationale.fr/static/openData/repository/15/loi/amendements_legis/Amendements_XV.json.zip", "pollingFrequency": 6000},
 
+        }
+        self.__debatEnSeancePubliqueTableDefinition = {
+            "tableName": "DEBATS_EN_SEANCE_PUBLIQUE",
+            "source": "AN",
+            "schema": {
+                "uid": {"path": "compteRendu:uid", "htmlEscape": False, "type": "VARCHAR ( 40 ) PRIMARY KEY", "search": True},
+                "dateSeanceJour": {"path": "compteRendu:metadonnees:dateSeanceJour", "htmlEscape": False, "type": "VARCHAR ( 100 )", "search": False},
+                "contenu": {"path": "compteRendu:contenu", "htmlEscape": True, "type": "VARCHAR ( 3200000 )", "search": True},
+            }
         }
 
         self.__dossierLegislatifDocumentTableDefinition = {
@@ -141,7 +151,24 @@ class AssembleeNationale:
             }
         }
 
+        self.__reunionsTableDefinition = {
+            "tableName": "REUNIONS",
+            "source": "AN",
+            "schema": {
+                "uid": {"path": "reunion:uid", "htmlEscape": False, "type": "VARCHAR ( 40 ) PRIMARY KEY", "search": True},
+                "lieu": {"path": "reunion:lieu:libelleLong", "htmlEscape": True, "type": "VARCHAR ( 1000 )", "search": False},
+                "compteRenduRef": {"path": "reunion:compteRenduRef", "htmlEscape": True, "type": "VARCHAR ( 200 )", "search": False},
+                "ordreDuJour": {"path": "reunion:ODJ", "htmlEscape": True, "type": "VARCHAR ( 100000 )", "search": True},
+                "participants": {"path": "reunion:participants", "htmlEscape": True, "type": "VARCHAR ( 20000 )", "search": False},
+                "etat": {"path": "reunion:cycleDeVie:etat", "htmlEscape": True, "type": "VARCHAR ( 200000 )", "search": False},
+                "dateDebut": {"path": "reunion:timeStampDebut", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
+                "dateFin": {"path": "reunion:timeStampFin", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE", "search": False}
+            }
+        }
+
         self.__tableList = {
+            "DEBATS_EN_SEANCE_PUBLIQUE": self.__debatEnSeancePubliqueTableDefinition,
+            "REUNIONS": self.__reunionsTableDefinition,
             "QUESTIONS_AU_GOUVERNEMENT": self.__questionAuGouvernementTableDefinition,
             "QUESTIONS_ORALES_SANS_DEBAT": self.__questionOraleSansDebatTableDefinition,
             "DOSSIERS_LEGISLATIFS_DOCUMENT": self.__dossierLegislatifDocumentTableDefinition,
@@ -337,7 +364,6 @@ class AssembleeNationale:
                 shutil.rmtree(directoryToExtract)
                 self.__debugPrint("Finished", level=1)
         except:
-            traceback.print_exc()
             pass
 
         # Extract zip
@@ -351,6 +377,8 @@ class AssembleeNationale:
 
         sourceName = directoryToExtract.split("/")[-2]
         if sourceName == "DOSSIERS_LEGISLATIFS":
+            self.__jsonReadOK = 0
+            self.__jsonReadNOK = 0
             self.__uploadToDb(
                 directoryToExtract+"/json/document", table="DOSSIERS_LEGISLATIFS_DOCUMENT")
             self.__uploadToDb(
@@ -369,6 +397,15 @@ class AssembleeNationale:
             print("json AMENDEMENTS NOK:"+str(self.__jsonReadNOK))
             print("Upload amendements in "+str(time.time()-lastTime))
         elif sourceName == "DEBATS_EN_SEANCE_PUBLIQUE":
+            lastTime = time.time()
+            self.__jsonReadOK = 0
+            self.__jsonReadNOK = 0
+            self.__uploadToDb(
+                directoryToExtract+"/xml/compteRendu", table="DEBATS_EN_SEANCE_PUBLIQUE")
+            print("json DEBATS_EN_SEANCE_PUBLIQUE OK:"+str(self.__jsonReadOK))
+            print("json DEBATS_EN_SEANCE_PUBLIQUE NOK:"+str(self.__jsonReadNOK))
+            print("Upload DEBATS_EN_SEANCE_PUBLIQUE in " +
+                  str(time.time()-lastTime))
             pass
         elif sourceName == "VOTES":
             pass
@@ -402,6 +439,14 @@ class AssembleeNationale:
             print("json QUESTIONS_ECRITES NOK:"+str(self.__jsonReadNOK))
             print("Upload QUESTIONS_ECRITES in "+str(time.time()-lastTime))
         elif sourceName == "REUNIONS":
+            lastTime = time.time()
+            self.__jsonReadOK = 0
+            self.__jsonReadNOK = 0
+            self.__uploadToDb(
+                directoryToExtract+"/json/reunion", table="REUNIONS")
+            print("json REUNIONS OK:"+str(self.__jsonReadOK))
+            print("json REUNIONS NOK:"+str(self.__jsonReadNOK))
+            print("Upload REUNIONS in "+str(time.time()-lastTime))
             pass
 
     """__getUidList
@@ -437,6 +482,7 @@ class AssembleeNationale:
         connection.autocommit = False
         cursor = connection.cursor()
 
+        # First get ths list of uid for this table. We will not upload again if already in table.
         uidList = self.__getUidList(table)
 
         if table in self.__tableList:
@@ -455,7 +501,10 @@ class AssembleeNationale:
                     with open(path, 'r') as sourceFile:
                         text = sourceFile.read()
                         try:
-                            doc = json.loads(text)
+                            if "xml" in fileName:
+                                doc = json.loads(json.dumps(xmltodict.parse(text)))
+                            else:
+                                doc = json.loads(text)
                             try:
                                 query, uid = self.__buildQueryFromDef(
                                     doc, tableDefinition)
@@ -467,8 +516,8 @@ class AssembleeNationale:
                             except KeyboardInterrupt:
                                 sys.exit(0)
                             except:
+                                traceback.print_exc()
                                 pass
-                                # traceback.print_exc()
                         except KeyboardInterrupt:
                             sys.exit(0)
                         except:
@@ -546,7 +595,7 @@ class AssembleeNationale:
                                 sys.exit(0)
                         elif columnDef["type"] == "TIMESTAMP WITH TIME ZONE":
                             timestampOK = False
-                            # Check that format of timestamp is OL
+                            # Check that format of timestamp is OK
                             try:
                                 datetime.datetime.strptime(
                                     docPath, "%Y-%m-%dT%H:%M:%S%z")
@@ -581,7 +630,6 @@ class AssembleeNationale:
                 except KeyboardInterrupt:
                     sys.exit(0)
                 except:
-                    print(doc)
                     traceback.print_exc()
         query += columnString[:-1] + ") VALUES (" + valuesString[:-1]+");"
         if uid is None:
@@ -1133,6 +1181,41 @@ class AssembleeNationale:
                 ret["documents"].append(entryData)
         except:
             pass
+        connection.close()
+        return ret
+
+    """getDiscussionANByUid
+				return a discussion en seance publique in the AN by its uid
+				@params uid : uid of reunion
+				@return :
+
+	"""
+
+    def getDiscussionANByUid(self, uid):
+        connection = psycopg2.connect(database=self.__database, user=self.__userDatabase,
+                                      password=self.__passwordDatabase, host=self.__hostDatabase, port=self.__portDatabase)
+        connection.autocommit = True
+        cursor = connection.cursor()
+
+        ret = {}
+        query = "SELECT uid, compteRenduRef FROM REUNIONS WHERE uid=%s ;"
+
+        try:
+            cursor.execute(query, (uid,))
+            ret["uidCompteRendu"] = cursor.fetchall()[0][1]
+        except:
+            traceback.print_exc()
+            pass
+        
+        query = "SELECT uid, contenu FROM DEBATS_EN_SEANCE_PUBLIQUE WHERE uid=%s;"
+
+        try:
+            cursor.execute(query, (ret["uidCompteRendu"],))
+            ret["contenu"] = cursor.fetchall()[0][1]
+        except:
+            traceback.print_exc()
+            pass
+        
         connection.close()
         return ret
 

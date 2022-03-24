@@ -88,6 +88,7 @@ class DossierLegislatif extends React.Component {
                                     searchWords={this.props.query == "" ? [] : generateSearchWords(this.props.query)}
                                     sanitize={sanitizeWords}
                                     textToHighlight={this.state.dossierLegislatif.titre} />
+                                    {/*this.state.dossierLegislatif.uid*/}
 
 
                             </div>

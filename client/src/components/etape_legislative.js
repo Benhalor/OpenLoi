@@ -9,7 +9,6 @@ class EtapeLegislative extends React.Component {
         super(props);
         this.state = { displayEtapeLegislative: false, subEtapesLegislatives: null };
         this.getSubEtapesLegislatives(this.props.data.actesLegislatifs)
-        console.log(this.props.data)
     }
 
     getSubEtapesLegislatives(arrayOfEtapes) {

@@ -1,15 +1,15 @@
 import React, { Component } from 'react';
 import Highlighter from "react-highlight-words";
 import Amendement from './amendement'
+import DiscussionSeancePublique from './discussion-seance-publique'
 import { convertDate, sanitizeWords, generateSearchWords, firstLetterUppercase } from './utils'
 import * as config from './config';
 
 class SubEtapeLegislative extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { texteAssocie: null, amendements: null, amendementsQuery: null, dateActe: null, userQuery: "" };
+        this.state = { texteAssocie: null, amendements: null, amendementsQuery: null, dateActe: null, userQuery: "", etapesDiscussion: null, displayAmendements: false, displayDiscussions: false };
         this.getAssociatedDocument()
-        console.log(this.props.senatChemin.split("/").slice(-1)[0].slice(0, -5))
     }
 
     getAssociatedDocument() {
@@ -26,15 +26,15 @@ class SubEtapeLegislative extends React.Component {
                 )
 
         } else if (this.props.data.libelleActe.nomCanonique == "Discussion en séance publique") {
-            var lastEtape
+            var etapesDiscussion
             if (Array.isArray(this.props.data.actesLegislatifs.acteLegislatif)) {
-                lastEtape = this.props.data.actesLegislatifs.acteLegislatif.slice(-1)[0]
+                etapesDiscussion = this.props.data.actesLegislatifs.acteLegislatif
             } else {
-                lastEtape = this.props.data.actesLegislatifs.acteLegislatif
+                etapesDiscussion = [this.props.data.actesLegislatifs.acteLegislatif]
             }
-            this.state.dateActe = lastEtape.dateActe
-            // TODO placer ici les discussions en séance publique.
-            //console.log(lastEtape)
+            this.state.dateActe = etapesDiscussion.slice(-1)[0].dateActe
+            this.state.etapesDiscussion = etapesDiscussion
+            
         } else if (this.props.data.libelleActe.nomCanonique == "Travaux des commissions") {
             try {
                 var lastEtape = this.props.data.actesLegislatifs.acteLegislatif.actesLegislatifs.acteLegislatif
@@ -160,6 +160,9 @@ class SubEtapeLegislative extends React.Component {
     changedisplayAmendements() {
         this.setState({ displayAmendements: !this.state.displayAmendements })
     }
+    changedisplayDiscussions() {
+        this.setState({ displayDiscussions: !this.state.displayDiscussions })
+    }
 
     handleChange(event) {
         this.setState({ userQuery: event.target.value });
@@ -190,7 +193,7 @@ class SubEtapeLegislative extends React.Component {
                                     textToHighlight={firstLetterUppercase(this.state.texteAssocie.titrePrincipal)} />
                             }
 
-
+                            {/* ----------AMENDEMENTS SECTION------------ */}
                             {/*Button for show/hide amendements*/}
                             <div className={(this.state.amendements != null && this.state.amendements.numberOfAmendement != 0) ? "row voirAmendements " : ""} >
                                 {(this.state.amendements != null && this.state.amendements.numberOfAmendement != 0)
@@ -211,20 +214,31 @@ class SubEtapeLegislative extends React.Component {
 
                                 }
                             </div>
-
                             {/* Display Amendements*/}
                             {(this.state.amendementsQuery === null && this.state.amendements !== null && this.state.displayAmendements) && this.state.amendements.amendements.map((data) => <Amendement key={data.uid + this.props.query} data={data} query={this.props.query} />)}
                             {(this.state.amendementsQuery === null && this.state.displayAmendements && this.state.amendements.amendements.length < this.state.amendements.numberOfAmendement)
                                 && <div className="voirPlus">Voir {this.state.amendements.numberOfAmendement - this.state.amendements.amendements.length} amendements de plus...</div>
 
                             }
-
                             {/* Display Amendements got by search*/}
                             {(this.state.amendementsQuery !== null && this.state.displayAmendements) && this.state.amendementsQuery.amendements.map((data) => <Amendement key={data.uid + this.state.userQuery} data={data} query={this.state.userQuery} />)}
                             {(this.state.amendementsQuery !== null && this.state.displayAmendements && this.state.amendementsQuery.amendements.length < this.state.amendementsQuery.numberOfAmendement)
                                 && <div className="voirPlus">Voir {this.state.amendementsQuery.numberOfAmendement - this.state.amendementsQuery.amendements.length} amendements de plus...</div>
 
                             }
+
+                            {/* ----------DISCUSSIONS EN SEANCE PUBLIQUE SECTION------------ */}
+                            {/*Button for show/hide discussions*/}
+                            <div className={(this.state.etapesDiscussion !== null ) ? "row voirAmendements " : ""} >
+                                {this.state.etapesDiscussion != null
+                                    && <div className="cursor hoverclear showAmendements" onClick={this.changedisplayDiscussions.bind(this)}>
+                                        Voir les discussions {this.state.displayDiscussions ? "⬇ " : "⬆ "}
+                                    </div>
+
+                                }
+                                
+                            </div>
+                            {(this.state.etapesDiscussion !== null && this.state.displayDiscussions)&& this.state.etapesDiscussion.map((data) => <DiscussionSeancePublique key={data.uid + this.state.userQuery} data={data} query={this.state.userQuery} />) }
                         </div>
 
 

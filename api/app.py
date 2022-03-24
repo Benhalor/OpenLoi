@@ -4,8 +4,6 @@ from flask import request
 from flask import abort
 import os
 import sys
-import time
-import json
 
 sys.path.append("../AssembleeNationale")
 sys.path.append('../Senat')
@@ -65,7 +63,6 @@ def helloWord():
 def getSearchResults(query):
     if request.method == 'GET':
         ret = assembleeNationale.search(query)
-        # print(ret)
         return ret
 
     else:
@@ -77,7 +74,6 @@ def getSearchResults(query):
 def getLastNews():
     if request.method == 'GET':
         ret = assembleeNationale.getLastNews()
-        # print(ret)
         return ret
 
     else:
@@ -89,7 +85,6 @@ def getLastNews():
 def getDocumentsDossierLegislatif(uid):
     if request.method == 'GET':
         ret = assembleeNationale.getDossierLegislatifdocumentsByUid(uid)
-        # print(ret)
         return ret
 
     else:
@@ -113,7 +108,6 @@ def getDocumentById(uid):
 def getQuestionEcrite(uid):
     if request.method == 'GET':
         ret = assembleeNationale.getQuestionEcriteByUid(uid)
-        # print(ret)
         return ret
 
     else:
@@ -137,7 +131,6 @@ def getQuestionOraleSansDebat(uid):
 def getQuestionAuGouvernement(uid):
     if request.method == 'GET':
         ret = assembleeNationale.getQuestionAuGouvernementByUid(uid)
-        # print(ret)
         return ret
 
     else:
@@ -181,13 +174,21 @@ def getAmendementsSenat(id, projectId):
 def getAmendementsQuery(uid, query):
     if request.method == 'GET':
         ret = assembleeNationale.getAmendementsQuery(uid, query)
-        # print(ret)
         return ret
 
     else:
         # 405 Method Forbidden
         abort(405)
 
+@app.route("/api/discussionAN/uid=<string:uid>", methods=['GET'])
+def getDiscussionAN(uid):
+    if request.method == 'GET':
+        ret = assembleeNationale.getDiscussionANByUid(uid)
+        return ret
+
+    else:
+        # 405 Method Forbidden
+        abort(405)
 
 """
 
