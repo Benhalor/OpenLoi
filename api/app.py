@@ -27,6 +27,13 @@ if os.getenv("POSTGRESQL_ADDON_DB") is not None:
         portDatabase=os.getenv("POSTGRESQL_ADDON_PORT"),
         verbose=2,
         setup=False)
+    senat = Senat.Senat(
+        database=os.getenv("POSTGRESQL_ADDON_DB"),
+        userDatabase=os.getenv("POSTGRESQL_ADDON_USER"),
+        passwordDatabase=os.getenv("POSTGRESQL_ADDON_PASSWORD"),
+        hostDatabase=os.getenv("POSTGRESQL_ADDON_HOST"),
+        portDatabase=os.getenv("POSTGRESQL_ADDON_PORT"),
+        verbose=2)
 else:
     # Local
     assembleeNationale = AssembleeNationale.AssembleeNationale(
