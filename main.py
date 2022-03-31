@@ -19,7 +19,7 @@ if os.getenv("POSTGRESQL_ADDON_DB") is not None:
         hostDatabase=os.getenv("POSTGRESQL_ADDON_HOST"),
         portDatabase=os.getenv("POSTGRESQL_ADDON_PORT"),
         verbose=2,
-        setup=True)
+        setup=False)
     senat = Senat.Senat(
         database=os.getenv("POSTGRESQL_ADDON_DB"),
         userDatabase=os.getenv("POSTGRESQL_ADDON_USER"),
@@ -36,7 +36,7 @@ else:
         hostDatabase='localhost',
         portDatabase='5432',
         verbose=2,
-        setup=True)
+        setup=False)
 
     senat = Senat.Senat(
         database='postgres',
