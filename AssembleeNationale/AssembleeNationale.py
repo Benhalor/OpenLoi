@@ -468,6 +468,20 @@ class AssembleeNationale:
             uidList.append(entry[0])
         return uidList
 
+    """removeUselessIdentifiers
+				Remove <italique>, <br>, ... flags from text
+				@params text : text to process
+				@return : text without identifiers
+
+	"""
+
+    def removeUselessIdentifiers(self, text, listOfIdentifiers = ["<exposant>", "</exposant>", "<italique>", "</italique>", "<br/>"]):
+        
+        for identifier in listOfIdentifiers:
+            text = text.replace(identifier, "")
+        return text
+
+
     """__uploadToDb
 				Recursively explore the foler dossierLegislatif and upload to db
 				@params directory : path of the directory
@@ -502,6 +516,7 @@ class AssembleeNationale:
                         text = sourceFile.read()
                         try:
                             if "xml" in fileName:
+                                text = self.removeUselessIdentifiers(text)
                                 doc = json.loads(json.dumps(xmltodict.parse(text)))
                             else:
                                 doc = json.loads(text)

@@ -3,12 +3,15 @@ import * as config from './config';
 import Highlighter from "react-highlight-words";
 //import AmendementDetail from './amendement_detail.js';
 import { convertDate, sanitizeWords, generateHighlightedHtml } from './utils'
+import PointDiscussionSeancePublique from './point_discussion_seance_publique';
 
 class DiscussionSeancePublique extends React.Component {
     constructor(props) {
         super(props);
         this.state = { displayDiscussion: false, discussion: null };
         this.getDiscution(this.props.data.reunionRef)
+       // console.log(this.props.data)
+        
     }
 
     changeDisplayDiscussion() {
@@ -22,6 +25,7 @@ class DiscussionSeancePublique extends React.Component {
             .then(
                 (result) => {
                     this.setState({ discussion: result })
+                    console.log(JSON.parse(result.contenu).point)
 
                 }
 
@@ -36,20 +40,24 @@ class DiscussionSeancePublique extends React.Component {
             return (
 
 
-                <div className="amendement">
+                <div className="discussion">
 
                     <div className="" >
                         <div className="col text-column-amendement">
                             <div className="row hoverclear cursor" onClick={this.changeDisplayDiscussion.bind(this)}>
                                 <div className="col enteteAmendement">
-                                🗣 {this.props.data.reunionRef}
+                                🗣 Discussion du {convertDate(this.props.data.dateActe)}
                                 </div>
 
 
                             </div>
                             {this.state.displayDiscussion &&
                                 <div className="col textAmendement">
-                                    {this.state.discussion !== null && this.state.discussion.contenu}
+                                    {this.state.discussion !== null && 
+                                    JSON.parse(this.state.discussion.contenu).point.map((data) => <PointDiscussionSeancePublique key={data["@id_syceron"]} data={data} query={this.props.query} />)
+                                    
+                                    
+                                    }
                                 </div>
                             }
 

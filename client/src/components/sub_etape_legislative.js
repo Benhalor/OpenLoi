@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Highlighter from "react-highlight-words";
 import Amendement from './amendement'
-import DiscussionSeancePublique from './discussion-seance-publique'
+import DiscussionSeancePublique from './discussion_seance_publique'
 import { convertDate, sanitizeWords, generateSearchWords, firstLetterUppercase } from './utils'
 import * as config from './config';
 
@@ -186,7 +186,7 @@ class SubEtapeLegislative extends React.Component {
 
                         <div className="col">
                             {/*Title of document legislatif*/}
-                            {this.state.texteAssocie !== null &&
+                            {this.state.texteAssocie != null &&
                                 <Highlighter
                                     searchWords={this.props.query == "" ? [] : generateSearchWords(this.props.query)}
                                     sanitize={sanitizeWords}
@@ -238,7 +238,7 @@ class SubEtapeLegislative extends React.Component {
                                 }
                                 
                             </div>
-                            {(this.state.etapesDiscussion !== null && this.state.displayDiscussions)&& this.state.etapesDiscussion.map((data) => <DiscussionSeancePublique key={data.uid + this.state.userQuery} data={data} query={this.state.userQuery} />) }
+                            {(this.state.etapesDiscussion !== null && this.state.displayDiscussions)&& this.state.etapesDiscussion.map((data) => <DiscussionSeancePublique key={data.uid + this.state.userQuery} data={data} query={this.props.query} />) }
                         </div>
 
 
