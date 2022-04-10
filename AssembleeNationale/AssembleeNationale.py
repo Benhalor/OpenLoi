@@ -583,18 +583,20 @@ class AssembleeNationale:
                     valuesString += "TO_DATE(\'"+date+"\' , \'DD/MM/YYYY\'),"
             elif "REUNIONS" in tableDef["tableName"] and columnName == "dossierRef":
                 # Try to find dossier legislatif uid somewhere hidden
-                "dossierRef"
-                if "pointODJ" in doc["reunion"]["ODJ"]["pointsODJ"].keys():
-                    listOfPointsOdj = []
-                    if type(doc["reunion"]["ODJ"]["pointsODJ"]["pointODJ"]) is list:
-                        listOfPointsOdj = doc["reunion"]["ODJ"]["pointsODJ"]["pointODJ"]
-                    else:
-                        listOfPointsOdj = [doc["reunion"]["ODJ"]["pointsODJ"]["pointODJ"]]
-                    for pointOdj in listOfPointsOdj:
-                        if pointOdj["dossiersLegislatifsRefs"] is not None:
-                            columnString += columnName+","
-                            valuesString += "\'"+pointOdj["dossiersLegislatifsRefs"]["dossierRef"]+"\',"
-                            break;
+                try:
+                    if "pointODJ" in doc["reunion"]["ODJ"]["pointsODJ"].keys():
+                        listOfPointsOdj = []
+                        if type(doc["reunion"]["ODJ"]["pointsODJ"]["pointODJ"]) is list:
+                            listOfPointsOdj = doc["reunion"]["ODJ"]["pointsODJ"]["pointODJ"]
+                        else:
+                            listOfPointsOdj = [doc["reunion"]["ODJ"]["pointsODJ"]["pointODJ"]]
+                        for pointOdj in listOfPointsOdj:
+                            if pointOdj["dossiersLegislatifsRefs"] is not None:
+                                columnString += columnName+","
+                                valuesString += "\'"+pointOdj["dossiersLegislatifsRefs"]["dossierRef"]+"\',"
+                                break;
+                except:
+                    pass
             else:
                 try:
                     docPath = doc
