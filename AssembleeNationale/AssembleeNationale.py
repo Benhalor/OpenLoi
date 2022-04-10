@@ -43,7 +43,7 @@ class AssembleeNationale:
             "source": "AN",
             "schema": {
                 "uid": {"path": "compteRendu:uid", "htmlEscape": False, "type": "VARCHAR ( 40 ) PRIMARY KEY", "search": True},
-                "dateSeanceJour": {"path": "compteRendu:metadonnees:dateSeanceJour", "htmlEscape": False, "type": "VARCHAR ( 100 )", "search": False},
+                "dateSeanceJour": {"path": "compteRendu:metadonnees:dateSeanceJour", "htmlEscape": False, "type":  "DATE", "search": False},
                 "contenu": {"path": "compteRendu:contenu", "htmlEscape": True, "type": "VARCHAR ( 3200000 )", "search": True},
             }
         }
@@ -162,6 +162,7 @@ class AssembleeNationale:
                 "participants": {"path": "reunion:participants", "htmlEscape": True, "type": "VARCHAR ( 20000 )", "search": False},
                 "etat": {"path": "reunion:cycleDeVie:etat", "htmlEscape": True, "type": "VARCHAR ( 200000 )", "search": False},
                 "dateDebut": {"path": "reunion:timeStampDebut", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE", "search": False},
+                "dossierRef": {"path": "specialHandling...", "htmlEscape": False, "type": "VARCHAR ( 40 )", "search": False},
                 "dateFin": {"path": "reunion:timeStampFin", "htmlEscape": False, "type": "TIMESTAMP WITH TIME ZONE", "search": False}
             }
         }
@@ -475,12 +476,11 @@ class AssembleeNationale:
 
 	"""
 
-    def removeUselessIdentifiers(self, text, listOfIdentifiers = ["<exposant>", "</exposant>", "<italique>", "</italique>", "<br/>"]):
-        
+    def removeUselessIdentifiers(self, text, listOfIdentifiers=["<exposant>", "</exposant>", "<italique>", "</italique>", "<br/>"]):
+
         for identifier in listOfIdentifiers:
             text = text.replace(identifier, "")
         return text
-
 
     """__uploadToDb
 				Recursively explore the foler dossierLegislatif and upload to db
@@ -517,7 +517,8 @@ class AssembleeNationale:
                         try:
                             if "xml" in fileName:
                                 text = self.removeUselessIdentifiers(text)
-                                doc = json.loads(json.dumps(xmltodict.parse(text)))
+                                doc = json.loads(
+                                    json.dumps(xmltodict.parse(text)))
                             else:
                                 doc = json.loads(text)
                             try:
@@ -580,6 +581,20 @@ class AssembleeNationale:
                         date = doc["question"]["textesQuestion"]["texteQuestion"]["infoJO"]["dateJO"]
                     columnString += columnName+","
                     valuesString += "TO_DATE(\'"+date+"\' , \'DD/MM/YYYY\'),"
+            elif "REUNIONS" in tableDef["tableName"] and columnName == "dossierRef":
+                # Try to find dossier legislatif uid somewhere hidden
+                "dossierRef"
+                if "pointODJ" in doc["reunion"]["ODJ"]["pointsODJ"].keys():
+                    listOfPointsOdj = []
+                    if type(doc["reunion"]["ODJ"]["pointsODJ"]["pointODJ"]) is list:
+                        listOfPointsOdj = doc["reunion"]["ODJ"]["pointsODJ"]["pointODJ"]
+                    else:
+                        listOfPointsOdj = [doc["reunion"]["ODJ"]["pointsODJ"]["pointODJ"]]
+                    for pointOdj in listOfPointsOdj:
+                        if pointOdj["dossiersLegislatifsRefs"] is not None:
+                            columnString += columnName+","
+                            valuesString += "\'"+pointOdj["dossiersLegislatifsRefs"]["dossierRef"]+"\',"
+                            break;
             else:
                 try:
                     docPath = doc
@@ -604,7 +619,7 @@ class AssembleeNationale:
                                 valuesString += "\'"+docPath+"\',"
                                 columnString += columnName+","
                             except ValueError:
-                                #traceback.print_exc()
+                                # traceback.print_exc()
                                 pass
                             except KeyboardInterrupt:
                                 sys.exit(0)
@@ -717,18 +732,26 @@ class AssembleeNationale:
         ret["listOfQuestionsAuGouvernement"].extend(
             listOfQuestionsAuGouvernement)
 
+        # Try to fin at least one dossier legislatif by querying debates
+        if ret["listOfDossiersLegislatifs"] == 0:
+            count, listOfdossierLegislatif = self.__documentLegislatifSearchDebate(
+                cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, "DEBATS_EN_SEANCE_PUBLIQUE", initialList=ret["listOfDossiersLegislatifs"])
+
+        ret["count"] += count
+        ret["listOfDossiersLegislatifs"].extend(listOfdossierLegislatif)
+
         tempResult = []
         # Gather all results and give them a type key.
-        for questionEcrite in listOfQuestionsEcrites:
+        for questionEcrite in ret["listOfQuestionsEcrites"]:
             tempResult.append(
                 {"type": "questionEcrite", "uid": questionEcrite["uid"], "score": questionEcrite["score"]})
-        for questionOraleSansDebat in listOfQuestionsOralesSansDebat:
+        for questionOraleSansDebat in ret["listOfQuestionsOralesSansDebat"]:
             tempResult.append(
                 {"type": "questionOraleSansDebat", "uid": questionOraleSansDebat["uid"], "score": questionOraleSansDebat["score"]})
-        for dossierLegislatif in listOfdossierLegislatif:
+        for dossierLegislatif in ret["listOfDossiersLegislatifs"]:
             tempResult.append(
                 {"type": "dossierLegislatif", "uid": dossierLegislatif["uid"], "score": dossierLegislatif["score"]})
-        for questionAuGouvernement in listOfQuestionsAuGouvernement:
+        for questionAuGouvernement in ret["listOfQuestionsAuGouvernement"]:
             tempResult.append(
                 {"type": "questionAuGouvernement", "uid": questionAuGouvernement["uid"], "score": questionAuGouvernement["score"]})
 
@@ -737,6 +760,7 @@ class AssembleeNationale:
             tempResult, key=lambda d: d['score'], reverse=True)
         ret["listOfResults"].extend(tempResult)
 
+        # If number of result is too low, use a OR query
         if ret["count"] < maxNumberOfResults:
             processedQueryLogic = processedQuery.replace(" ", "|")
 
@@ -793,6 +817,42 @@ class AssembleeNationale:
 
         connection.close()
         return json.dumps(ret)
+
+
+    """__documentLegislatifSearchDebate
+				Generate a list of dossier legisaltifs querying the debates
+
+	"""
+
+    def __documentLegislatifSearchDebate(self, cursor, processedQueryLogic, numberOfMonthsOld, maxNumberOfResults, tableName, initialList=[]):
+
+        query = "SELECT uid,ts_rank_cd(ts, to_tsquery('french',%s),2) AS score, dateSeanceJour " \
+            "FROM " + tableName + " "\
+            "WHERE ( ts @@ to_tsquery('french',%s)" \
+            "AND (dateSeanceJour >  CURRENT_DATE - INTERVAL '%s months'))" \
+            "ORDER by score  DESC LIMIT %s;"
+
+        count = 0
+
+        listOfdossierLegislatif = []
+        try:
+            cursor.execute(query, (processedQueryLogic,
+                           processedQueryLogic, numberOfMonthsOld, maxNumberOfResults,))
+            for entry in cursor.fetchall():
+                uid = entry[0]
+                score = entry[1]
+
+                #find dossier ref
+                dossierRef = 0
+                d = {"uid": dossierRef,
+                     "score": score}
+                if not any(di['uid'] == dossierRef for di in listOfdossierLegislatif+initialList):
+                    listOfdossierLegislatif.append(d)
+                    count += 1
+
+        except:
+            traceback.print_exc()
+        return count, listOfdossierLegislatif
 
     """__documentLegislatifSearch
 				Generate a list of question containing a given query
@@ -1221,7 +1281,7 @@ class AssembleeNationale:
         except:
             traceback.print_exc()
             pass
-        
+
         query = "SELECT uid, contenu FROM DEBATS_EN_SEANCE_PUBLIQUE WHERE uid=%s;"
 
         try:
@@ -1230,7 +1290,7 @@ class AssembleeNationale:
         except:
             traceback.print_exc()
             pass
-        
+
         connection.close()
         return ret
 

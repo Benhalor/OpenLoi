@@ -41,6 +41,7 @@ class DiscussionSeancePublique extends React.Component {
 
 
                 <div className="discussion">
+                    {/*this.props.data.reunionRef*/}
 
                     <div className="" >
                         <div className="col text-column-amendement">
