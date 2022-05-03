@@ -5,8 +5,8 @@ from flask import abort
 import os
 import sys
 
-sys.path.append("../AssembleeNationale")
-sys.path.append('../Senat')
+sys.path.append("AssembleeNationale")
+sys.path.append('Senat')
 
 import Senat
 import AssembleeNationale
@@ -38,14 +38,14 @@ else:
         database='postgres',
         userDatabase='postgres',
         passwordDatabase='password',
-        hostDatabase='localhost',
+        hostDatabase='172.30.0.4',
         portDatabase='5432',
         verbose=2,
         setup=False)
     senat = Senat.Senat(
         database='postgres',
         userDatabase='postgres',
-        passwordDatabase='password',
+        passwordDatabase='172.30.0.4',
         hostDatabase='localhost',
         portDatabase='5432',
         verbose=2)
