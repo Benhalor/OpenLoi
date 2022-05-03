@@ -11,13 +11,13 @@
 
 
 ## Database
-Data are stored in a PostreSQL base
+Data are stored in a PostgreSQL base
 
 ## API
 The Flask API queries the database to expose it to the world. This API is used by the web client.
 
 ## Client
-This app is written with the REACT frameword
+This app is written with the REACT framework
 
 ## Required packages
 libpq-dev
